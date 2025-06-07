@@ -1,0 +1,15 @@
+datasets>=2.14.0
+nltk>=3.8.1
+numpy>=1.24.0
+pandas>=2.0.0
+tqdm>=4.65.0
+transformers>=4.30.0
+torch>=2.0.0
+comet-ml>=3.31.12
+bert-score>=0.3.11
+scikit-learn>=1.0.2
+scipy>=1.10.0
+huggingface-hub>=0.24.0
+safetensors>=0.4.3
+tokenizers>=0.21.1
+unbabel-comet>=2.0.0 
