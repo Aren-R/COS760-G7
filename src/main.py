@@ -1,122 +1,57 @@
-import logging
-import os
-import json
-import pandas as pd
-from typing import List, Dict
-import huggingface_hub
-from tqdm import tqdm
+from data_loader import load_original_flores, load_corrected_flores
+from models import initialize_models
+from translation import TranslationPipeline
 
-from models import ModelFactory
-from metrics import Metrics
-from domain_analyzer import DomainAnalyzer
-from data_loader import load_language_dataset
-from analysis import calculate_rank_correlation
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Create results directory if it doesn't exist
-os.makedirs('results', exist_ok=True)
-
-# Debug settings
-DEBUG_MODE = True
-DEBUG_SAMPLE_SIZE = 5  # Number of samples to use in debug mode
+DEBUG_SIZE = 10
 
 def main():
-    # Configuration
-    languages = ["hau", "nso", "tso", "zul"]
-    model_types = ["nllb", "opus-mt", "m2m100"]
+     #Load English data
+    english_data = load_original_flores(languages=['eng'])
+    english_data = {lang: texts[:DEBUG_SIZE] for lang, texts in english_data.items()}
+
+    # Load original FLORES dataset
+    original_data = load_original_flores()
+    original_data = {lang: texts[:DEBUG_SIZE] for lang, texts in original_data.items()}
+    print("Successfully loaded original FLORES devtest dataset")
+    print(f"Available languages: {list(original_data.keys())}")
     
-    # Initialize components
-    metrics = Metrics()
-    domain_analyzer = DomainAnalyzer()
+    # Load corrected FLORES dataset
+    corrected_data = load_corrected_flores()
+    corrected_data = {lang: texts[:DEBUG_SIZE] for lang, texts in corrected_data.items()}
+    print("\nSuccessfully loaded corrected FLORES devtest dataset")
+    print(f"Available languages: {list(corrected_data.keys())}")
     
-    # Store results
-    all_results = {}
-    all_correlations = {}
-    all_domain_analysis = {}
+    # Initialize translation models
+    print("\nInitializing translation models...")
+    models = initialize_models()
     
-    # Process each language with progress bar
-    for lang_code in tqdm(languages, desc="Processing languages"):
-        logger.info(f"\nProcessing {lang_code}...")
-        
-        try:
-            # Load datasets
-            datasets = load_language_dataset(lang_code)
-            
-            # Truncate datasets if in debug mode
-            if DEBUG_MODE:
-                logger.info(f"Debug mode: Truncating datasets to {DEBUG_SAMPLE_SIZE} samples")
-                datasets['original'] = datasets['original'][:DEBUG_SAMPLE_SIZE]
-                datasets['corrected'] = datasets['corrected'][:DEBUG_SAMPLE_SIZE]
-            
-            logger.info(f"Loaded {len(datasets['original'])} original and {len(datasets['corrected'])} corrected texts")
-            
-            # Store results for this language
-            lang_results = {}
-            model_scores = {
-                'original': {model: [] for model in model_types},
-                'corrected': {model: [] for model in model_types}
-            }
-            
-            # Evaluate each model with progress bar
-            for model_type in tqdm(model_types, desc=f"Evaluating models for {lang_code}", leave=False):
-                logger.info(f"Evaluating {model_type}...")
-                
-                # Get model and translate
-                model = ModelFactory.get_model(model_type)
-                translations = model.translate(datasets['original'], f"{lang_code}_Latn")
-                
-                # Calculate metrics
-                scores = metrics.evaluate_batch(
-                    sources=datasets['original'],
-                    hypotheses=translations,
-                    original_references=datasets['original'],
-                    corrected_references=datasets['corrected']
+    # Initialize translation pipeline
+    pipeline = TranslationPipeline(models)
+    
+    # Translate English data to each African language using each model
+    african_languages = ['hau', 'nso', 'tso', 'zul']
+    
+    print("\nStarting translations...")
+    for model_name in models.keys():
+        print(f"\nUsing {model_name} model:")
+        for target_lang in african_languages:
+            print(f"\nTranslating English to {target_lang}...")
+            try:
+                translations = pipeline.translate_batch(
+                    texts=english_data['eng'],
+                    source_lang='en',
+                    target_lang=target_lang,
+                    model_name=model_name,
+                    batch_size=4  # Small batch size for testing
                 )
                 
-                # Store scores
-                lang_results[model_type] = scores
-                for ref_type in ['original', 'corrected']:
-                    for metric in ['bleu', 'comet', 'bert_score']:
-                        model_scores[ref_type][model_type].append(scores[ref_type][metric])
-            
-            # Calculate rank correlations
-            correlations = {}
-            for metric in ['bleu', 'comet', 'bert_score']:
-                orig_scores = {m: s[metric] for m, s in lang_results.items()}
-                corr_scores = {m: s[metric] for m, s in lang_results.items()}
-                correlations[metric] = calculate_rank_correlation(orig_scores, corr_scores)
-            
-            # Analyze domain impact
-            domain_analysis = domain_analyzer.analyze_domain_impact(
-                texts=datasets['original'],
-                original_scores=model_scores['original'],
-                corrected_scores=model_scores['corrected']
-            )
-            
-            # Store results
-            all_results[lang_code] = lang_results
-            all_correlations[lang_code] = correlations
-            all_domain_analysis[lang_code] = domain_analysis
-            
-        except Exception as e:
-            logger.error(f"Error processing {lang_code}: {str(e)}")
-            continue
-    
-    # Save results to results directory
-    results_df = pd.DataFrame(all_results).T
-    results_df.to_csv('results/evaluation_results.csv')
-    logger.info("Saved evaluation results to results/evaluation_results.csv")
-    
-    with open('results/correlation_analysis.json', 'w') as f:
-        json.dump(all_correlations, f, indent=2)
-    logger.info("Saved correlation analysis to results/correlation_analysis.json")
-    
-    with open('results/domain_analysis.json', 'w') as f:
-        json.dump(all_domain_analysis, f, indent=2)
-    logger.info("Saved domain analysis to results/domain_analysis.json")
+                # Print first translation as example
+                print("\nExample translation:")
+                print(f"English: {english_data['eng'][0]}")
+                print(f"{target_lang}: {translations[0]}")
+                
+            except Exception as e:
+                print(f"Error translating to {target_lang}: {str(e)}")
 
 if __name__ == "__main__":
-    main() 
+    main()

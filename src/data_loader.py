@@ -1,28 +1,51 @@
-import os
-from typing import Dict, List
 from datasets import load_dataset
+from typing import Dict, List, Tuple
+import os
 
-def load_language_dataset(lang_code: str) -> Dict[str, List[str]]:
-    """Load both original and corrected datasets for a language"""
-    # Load original dataset from Hugging Face
-    original_dataset = load_dataset(
-        "openlanguagedata/flores_plus",
-        f"{lang_code}_Latn"
-    )
+def load_original_flores(languages: List[str] = ['eng', 'hau', 'nso', 'tso', 'zul']) -> Dict[str, List[str]]:
+    """
+    Load the original FLORES devtest dataset for specified languages.
     
-    # Get the project root directory (go up from src/ to project root)
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_dir)
+    Args:
+        languages: List of language codes to load (default: ['en', 'hau', 'nso', 'tso', 'zul'])
     
-    # Load corrected dataset from local file using absolute path
-    corrected_path = os.path.join(project_root, "data", "corrected", "devtest", f"{lang_code}_Latn.devtest")
-    if not os.path.exists(corrected_path):
-        raise FileNotFoundError(f"Corrected file not found at: {corrected_path}")
-        
-    with open(corrected_path, 'r', encoding='utf-8') as f:
-        corrected_texts = f.read().splitlines()
+    Returns:
+        Dictionary containing devtest splits for each language
+    """
+    data = {}
+    for lang in languages:
+        dataset = load_dataset("openlanguagedata/flores_plus", f"{lang}_Latn")
+        data[lang] = dataset['devtest']['text']
     
-    return {
-        'original': original_dataset['devtest']['text'],
-        'corrected': corrected_texts
-    }
+    return data
+
+def load_corrected_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul']) -> Dict[str, List[str]]:
+    """
+    Load the corrected FLORES devtest dataset for specified languages from local directory.
+    
+    Args:
+        languages: List of language codes to load (default: ['hau', 'nso', 'tso', 'zul'])
+    
+    Returns:
+        Dictionary containing devtest splits for each language
+    """
+    data = {}
+    base_path = "data/corrected"
+    
+    for lang in languages:
+        # Load devtest set
+        devtest_path = os.path.join(base_path, "devtest", f"{lang}_Latn.devtest")
+        if os.path.exists(devtest_path):
+            with open(devtest_path, 'r', encoding='utf-8') as f:
+                data[lang] = [line.strip() for line in f if line.strip()]
+    
+    return data
+
+def get_available_languages() -> List[str]:
+    """
+    Get list of available language codes in the dataset.
+    
+    Returns:
+        List of language codes
+    """
+    return ['hau', 'nso', 'tso', 'zul'] 
