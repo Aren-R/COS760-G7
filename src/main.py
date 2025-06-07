@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 # Create results directory if it doesn't exist
 os.makedirs('results', exist_ok=True)
 
+# Debug settings
+DEBUG_MODE = True
+DEBUG_SAMPLE_SIZE = 5  # Number of samples to use in debug mode
+
 def main():
     # Configuration
     languages = ["hau", "nso", "tso", "zul"]
@@ -40,6 +44,13 @@ def main():
         try:
             # Load datasets
             datasets = load_language_dataset(lang_code)
+            
+            # Truncate datasets if in debug mode
+            if DEBUG_MODE:
+                logger.info(f"Debug mode: Truncating datasets to {DEBUG_SAMPLE_SIZE} samples")
+                datasets['original'] = datasets['original'][:DEBUG_SAMPLE_SIZE]
+                datasets['corrected'] = datasets['corrected'][:DEBUG_SAMPLE_SIZE]
+            
             logger.info(f"Loaded {len(datasets['original'])} original and {len(datasets['corrected'])} corrected texts")
             
             # Store results for this language
