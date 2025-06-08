@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from models import TranslationModel
 import torch
-from sacremoses import MosesTokenizer
+from sacremoses import MosesTokenizer, MosesDetokenizer
 import json
 import os
 from pathlib import Path
@@ -14,6 +14,7 @@ class TranslationPipeline:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.tokenizer = MosesTokenizer()
+        self.detokenizer = MosesDetokenizer()
         
     def _get_cache_path(self, model_name: str, source_lang: str, target_lang: str) -> Path:
         """Get the path for the cache file"""
@@ -36,8 +37,8 @@ class TranslationPipeline:
         return [self.tokenizer.tokenize(text, return_str=True) for text in texts]
     
     def _detokenize_batch(self, texts: List[str], lang: str) -> List[str]:
-        """Detokenize a batch of texts using Moses tokenizer"""
-        return [self.tokenizer.detokenize(text.split()) for text in texts]
+        """Detokenize a batch of texts using Moses detokenizer"""
+        return [self.detokenizer.detokenize(text.split()) for text in texts]
     
     def translate_batch(
         self,

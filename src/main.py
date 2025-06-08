@@ -1,6 +1,7 @@
 from data_loader import load_original_flores, load_corrected_flores
 from models import initialize_models
 from translation import TranslationPipeline
+from evaluation import TranslationEvaluator
 
 DEBUG_SIZE = 10
 
@@ -25,13 +26,14 @@ def main():
     print("\nInitializing translation models...")
     models = initialize_models()
     
-    # Initialize translation pipeline
+    # Initialize translation pipeline and evaluator
     pipeline = TranslationPipeline(models)
+    evaluator = TranslationEvaluator()
     
     # Translate English data to each African language using each model
     african_languages = ['hau', 'nso', 'tso', 'zul']
     
-    print("\nStarting translations...")
+    print("\nStarting translations and evaluations...")
     for model_name in models.keys():
         print(f"\nUsing {model_name} model:")
         for target_lang in african_languages:
@@ -50,8 +52,34 @@ def main():
                 print(f"English: {english_data['eng'][0]}")
                 print(f"{target_lang}: {translations[0]}")
                 
+                # # Evaluate translations against both original and corrected references
+                # print("\nEvaluating translations...")
+                # print("target lang: ", target_lang)
+                # # print(original_data[target_lang])
+                # # Get references from both datasets
+                # original_refs = original_data[target_lang]
+                # corrected_refs = corrected_data[target_lang]
+                # print("starting with scores")
+                # # Calculate BLEU scores
+                # original_scores = evaluator.evaluate_translations(
+                #     translations=translations,
+                #     references=original_refs,
+                #     metrics=['bleu']
+                # )
+                
+                # corrected_scores = evaluator.evaluate_translations(
+                #     translations=translations,
+                #     references=corrected_refs,
+                #     metrics=['bleu']
+                # )
+                
+                # print(f"\nBLEU Scores for {model_name} ({target_lang}):")
+                # print(f"Original references: {original_scores['bleu']:.4f}")
+                # print(f"Corrected references: {corrected_scores['bleu']:.4f}")
+                
             except Exception as e:
-                print(f"Error translating to {target_lang}: {str(e)}")
+                print(f"Error processing {target_lang}: {str(e)}")
+                print("Skipping to next language pair...")
 
 if __name__ == "__main__":
     main()

@@ -38,7 +38,7 @@ def load_corrected_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul']) -
         if os.path.exists(devtest_path):
             with open(devtest_path, 'r', encoding='utf-8') as f:
                 data[lang] = [line.strip() for line in f if line.strip()]
-    
+                
     return data
 
 def get_available_languages() -> List[str]:

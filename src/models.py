@@ -8,7 +8,7 @@ OPUS_MT_LANG_MAP = {
     'hau': 'ha',  # Hausa
     'nso': 'nso', # Northern Sotho
     'tso': 'ts',  # Xitsonga
-    'zul': 'zu',  # isiZulu
+    'zul': 'mul',  # isiZulu
     'en': 'en'   # English
 }
 
@@ -71,7 +71,11 @@ class OPUSMTModel(TranslationModel):
     
     def _load_model(self, source_lang: str, target_lang: str):
         """Load the appropriate model for the language pair"""
-        model_name = self._get_model_name(source_lang, target_lang)
+        src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
+        tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
+        print("src_code: ", src_code)
+        print("tgt_code: ", tgt_code)
+        model_name = self._get_model_name(src_code, tgt_code)
         if model_name not in self.models:
             try:
                 self.models[model_name] = {
