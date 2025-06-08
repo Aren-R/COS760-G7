@@ -5,6 +5,7 @@ from sacremoses import MosesTokenizer, MosesDetokenizer
 import json
 import os
 from pathlib import Path
+from tqdm import tqdm
 
 class TranslationPipeline:
     """Pipeline for handling translations with caching and batching"""
@@ -76,9 +77,12 @@ class TranslationPipeline:
         # Tokenize input texts
         tokenized_texts = self._tokenize_batch(texts, source_lang)
         
-        # Process in batches
+        # Process in batches with progress bar
         translations = []
-        for i in range(0, len(tokenized_texts), batch_size):
+        total_batches = (len(tokenized_texts) + batch_size - 1) // batch_size
+        
+        print(f"\nTranslating {len(tokenized_texts)} texts in {total_batches} batches...")
+        for i in tqdm(range(0, len(tokenized_texts), batch_size), desc="Processing batches", total=total_batches):
             batch = tokenized_texts[i:i + batch_size]
             
             # Check cache for each text in batch

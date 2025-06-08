@@ -3,10 +3,11 @@ from models import initialize_models
 from translation import TranslationPipeline
 from evaluation import TranslationEvaluator
 
-DEBUG_SIZE = 10
+DEBUG_SIZE = 50
+TRANSLATION_BATCH_SIZE=50
 
 def main():
-     #Load English data
+    # Load English data
     english_data = load_original_flores(languages=['eng'])
     english_data = {lang: texts[:DEBUG_SIZE] for lang, texts in english_data.items()}
 
@@ -44,7 +45,7 @@ def main():
                     source_lang='en',
                     target_lang=target_lang,
                     model_name=model_name,
-                    batch_size=4  # Small batch size for testing
+                    batch_size=TRANSLATION_BATCH_SIZE
                 )
                 
                 # # Evaluate translations against both original and corrected references
