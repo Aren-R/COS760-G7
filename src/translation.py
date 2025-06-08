@@ -81,7 +81,7 @@ class TranslationPipeline:
         translations = []
         total_batches = (len(tokenized_texts) + batch_size - 1) // batch_size
         
-        print(f"\nTranslating {len(tokenized_texts)} texts in {total_batches} batches...")
+        print(f"Translating {len(tokenized_texts)} texts in {total_batches} batches...")
         for i in tqdm(range(0, len(tokenized_texts), batch_size), desc="Processing batches", total=total_batches):
             batch = tokenized_texts[i:i + batch_size]
             

@@ -27,7 +27,7 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [X] Implement NLLB wrapper
   - [X] Implement OPUS-MT wrapper
   - [ ] Implement M2M-100 wrapper
-  - [ ] Create unified translation interface
+  - [X] Create unified translation interface
 
 - [X] Create translation pipeline (`translation.py`)
   - [X] Implement batch translation
@@ -35,10 +35,10 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [X] Handle model-specific tokenization
 
 ### 4. Evaluation System
-- [ ] Create evaluation module (`evaluation.py`)
-  - [ ] Implement BLEU score calculation
-  - [ ] Set up COMET evaluation
-  - [ ] Implement BERTScore evaluation
+- [X] Create evaluation module (`evaluation.py`)
+  - [X] Implement BLEU score calculation
+  - [X] Set up COMET evaluation
+  - [X] Implement BERTScore evaluation
   - [ ] Create ranking comparison functions
 
 - [ ] Create metrics module (`metrics.py`)
