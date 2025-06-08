@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import nltk
@@ -7,6 +7,7 @@ from bert_score import score as bert_score
 import torch
 import json
 from pathlib import Path
+from scipy import stats
 
 class TranslationEvaluator:
     """Main class for evaluating machine translations using multiple metrics."""
@@ -41,7 +42,7 @@ class TranslationEvaluator:
         translations: List[str],
         references: List[str],
         metrics: Optional[List[str]] = None
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Dict[str, Union[float, List[float]]]]:
         """
         Evaluate translations against references using specified metrics.
         
@@ -51,7 +52,7 @@ class TranslationEvaluator:
             metrics: List of metrics to use (default: all available metrics)
             
         Returns:
-            Dictionary of metric scores
+            Dictionary containing both mean scores and individual scores for each metric
         """
         if metrics is None:
             metrics = list(self.metrics.keys())
@@ -60,14 +61,18 @@ class TranslationEvaluator:
         for metric in metrics:
             if metric in self.metrics:
                 try:
-                    scores[metric] = self.metrics[metric](translations, references)
+                    mean_score, individual_scores = self.metrics[metric](translations, references)
+                    scores[metric] = {
+                        'mean': mean_score,
+                        'individual': individual_scores
+                    }
                 except Exception as e:
                     print(f"Warning: Error calculating {metric} score: {str(e)}")
-                    scores[metric] = None
+                    scores[metric] = {'mean': None, 'individual': None}
         
         return scores
     
-    def _calculate_bleu(self, translations: List[str], references: List[str]) -> float:
+    def _calculate_bleu(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
         Calculate BLEU score for translations.
         
@@ -76,7 +81,7 @@ class TranslationEvaluator:
             references: List of reference texts
             
         Returns:
-            Average BLEU score across all translations
+            Tuple of (mean BLEU score, list of individual BLEU scores)
         """
         if len(translations) != len(references):
             raise ValueError("Number of translations must match number of references")
@@ -93,11 +98,11 @@ class TranslationEvaluator:
                 translation_tokens,
                 smoothing_function=smoothing
             )
-            scores.append(score)
+            scores.append(float(score))
         
-        return float(np.mean(scores))
+        return float(np.mean(scores)), scores
     
-    def _calculate_comet(self, translations: List[str], references: List[str]) -> float:
+    def _calculate_comet(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
         Calculate COMET score for translations.
         
@@ -106,7 +111,7 @@ class TranslationEvaluator:
             references: List of reference texts
             
         Returns:
-            Average COMET score across all translations
+            Tuple of (mean COMET score, list of individual COMET scores)
         """
         if self.comet_model is None:
             raise ValueError("COMET model not initialized")
@@ -126,9 +131,10 @@ class TranslationEvaluator:
         
         # Get model predictions
         model_output = self.comet_model.predict(data, batch_size=8, gpus=1 if torch.cuda.is_available() else 0)
-        return float(np.mean(model_output.scores))
+        scores = [float(score) for score in model_output.scores]
+        return float(np.mean(scores)), scores
     
-    def _calculate_bertscore(self, translations: List[str], references: List[str]) -> float:
+    def _calculate_bertscore(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
         Calculate BERTScore for translations.
         
@@ -137,7 +143,7 @@ class TranslationEvaluator:
             references: List of reference texts
             
         Returns:
-            Average BERTScore F1 across all translations
+            Tuple of (mean BERTScore F1, list of individual BERTScore F1 scores)
         """
         if len(translations) != len(references):
             raise ValueError("Number of translations must match number of references")
@@ -150,7 +156,8 @@ class TranslationEvaluator:
             device="cuda" if torch.cuda.is_available() else "cpu"
         )
         
-        return float(F1.mean().item())
+        scores = [float(score) for score in F1]
+        return float(F1.mean().item()), scores
     
     def compare_rankings(
         self,
@@ -170,12 +177,50 @@ class TranslationEvaluator:
         # TODO: Implement ranking comparison
         pass
 
+    def calculate_rank_correlations(
+        self,
+        original_scores: Dict[str, Dict[str, Union[float, List[float]]]],
+        corrected_scores: Dict[str, Dict[str, Union[float, List[float]]]]
+    ) -> Dict[str, Dict[str, float]]:
+        """
+        Calculate Spearman's rank correlation coefficient between original and corrected scores.
+        
+        Args:
+            original_scores: Dictionary containing scores using original references
+            corrected_scores: Dictionary containing scores using corrected references
+            
+        Returns:
+            Dictionary containing correlation coefficients for each metric
+        """
+        correlations = {}
+        
+        for metric in original_scores.keys():
+            if metric in corrected_scores:
+                orig_individual = original_scores[metric]['individual']
+                corr_individual = corrected_scores[metric]['individual']
+                
+                if orig_individual is not None and corr_individual is not None:
+                    try:
+                        correlation, p_value = stats.spearmanr(orig_individual, corr_individual)
+                        correlations[metric] = {
+                            'correlation': float(correlation),
+                            'p_value': float(p_value)
+                        }
+                    except Exception as e:
+                        print(f"Warning: Error calculating correlation for {metric}: {str(e)}")
+                        correlations[metric] = {
+                            'correlation': None,
+                            'p_value': None
+                        }
+        
+        return correlations
+
     def save_evaluation_results(
         self,
         model_name: str,
         target_lang: str,
-        original_scores: Dict[str, float],
-        corrected_scores: Dict[str, float],
+        original_scores: Dict[str, Dict[str, Union[float, List[float]]]],
+        corrected_scores: Dict[str, Dict[str, Union[float, List[float]]]],
         translations: List[str],
         original_refs: List[str],
         corrected_refs: List[str]
@@ -186,8 +231,8 @@ class TranslationEvaluator:
         Args:
             model_name: Name of the translation model
             target_lang: Target language code
-            original_scores: Scores using original references
-            corrected_scores: Scores using corrected references
+            original_scores: Scores using original references (containing both mean and individual scores)
+            corrected_scores: Scores using corrected references (containing both mean and individual scores)
             translations: List of translations
             original_refs: List of original references
             corrected_refs: List of corrected references
@@ -200,13 +245,17 @@ class TranslationEvaluator:
         lang_dir = model_dir / target_lang
         lang_dir.mkdir(exist_ok=True)
         
+        # Calculate rank correlations
+        correlations = self.calculate_rank_correlations(original_scores, corrected_scores)
+        
         # Save scores
         scores = {
             "model": model_name,
             "target_language": target_lang,
             "metrics": {
                 "original": original_scores,
-                "corrected": corrected_scores
+                "corrected": corrected_scores,
+                "correlations": correlations
             }
         }
         

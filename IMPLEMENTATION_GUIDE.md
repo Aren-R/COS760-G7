@@ -40,11 +40,7 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [X] Set up COMET evaluation
   - [X] Implement BERTScore evaluation
   - [ ] Create ranking comparison functions
-
-- [ ] Create metrics module (`metrics.py`)
   - [ ] Implement Spearman's rank correlation
-  - [ ] Create score delta analysis
-  - [ ] Implement domain-specific analysis tools
 
 ### 5. Analysis Pipeline
 - [] Create analysis module (`analysis.py`)
