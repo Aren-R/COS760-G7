@@ -47,8 +47,8 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [ ] Implement domain-specific analysis tools
 
 ### 5. Analysis Pipeline
-- [ ] Create analysis module (`analysis.py`)
-  - [ ] Implement ranking comparison
+- [] Create analysis module (`analysis.py`)
+  - [] Implement ranking comparison
   - [ ] Create domain impact analysis
   - [ ] Generate statistical reports
 

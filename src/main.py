@@ -2,6 +2,7 @@ from data_loader import load_original_flores, load_corrected_flores
 from models import initialize_models
 from translation import TranslationPipeline
 from evaluation import TranslationEvaluator
+import json
 
 # Configuration
 DEBUG_SIZE = 100
@@ -62,6 +63,7 @@ def main():
                     metrics=['bleu', 'comet', 'bertscore']
                 )
                 
+                # Save individual evaluation results
                 evaluator.save_evaluation_results(
                     model_name=model_name,
                     target_lang=target_lang,
@@ -77,6 +79,7 @@ def main():
             except Exception as e:
                 print(f"Error processing {target_lang}: {str(e)}")
                 print("Skipping to next language pair...")
+    
 
 if __name__ == "__main__":
     main()
