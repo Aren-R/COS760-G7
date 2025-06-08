@@ -39,8 +39,8 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [X] Implement BLEU score calculation
   - [X] Set up COMET evaluation
   - [X] Implement BERTScore evaluation
-  - [ ] Create ranking comparison functions
-  - [ ] Implement Spearman's rank correlation
+  - [X] Create ranking comparison functions
+  - [X] Implement Spearman's rank correlation
 
 ### 5. Analysis Pipeline
 - [] Create analysis module (`analysis.py`)

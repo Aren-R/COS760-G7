@@ -255,6 +255,7 @@ class TranslationEvaluator:
             "metrics": {
                 "original": original_scores,
                 "corrected": corrected_scores,
+                "delta": corrected_scores-original_scores,
                 "correlations": correlations
             }
         }
