@@ -8,7 +8,7 @@ OPUS_MT_LANG_MAP = {
     'hau': 'ha',  # Hausa
     'nso': 'nso', # Northern Sotho
     'tso': 'ts',  # Xitsonga
-    'zul': 'mul',  # isiZulu
+    'zul': 'zu',  # isiZulu
     'en': 'en'   # English
 }
 
@@ -67,14 +67,15 @@ class OPUSMTModel(TranslationModel):
         # Convert language codes to OPUS-MT format
         src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
         tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
+        if (tgt_code == "zu"):
+            return f"Helsinki-NLP/opus-mt-{src_code}-mul"
         return f"Helsinki-NLP/opus-mt-{src_code}-{tgt_code}"
     
     def _load_model(self, source_lang: str, target_lang: str):
         """Load the appropriate model for the language pair"""
         src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
         tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
-        print("src_code: ", src_code)
-        print("tgt_code: ", tgt_code)
+
         model_name = self._get_model_name(src_code, tgt_code)
         if model_name not in self.models:
             try:
@@ -92,11 +93,17 @@ class OPUSMTModel(TranslationModel):
         tokenizer = model_data['tokenizer']
         model = model_data['model']
         
-        # Tokenize
-        inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        if target_lang == 'zul':
+            tagged_texts = [f">>zul<< {text}" for text in texts]
+            inputs = tokenizer(tagged_texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        else:
+            inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
         
-        # Generate translations
-        translated_tokens = model.generate(**inputs, max_length=512)
+        # Generate translations with proper max_length and early_stopping
+        translated_tokens = model.generate(
+            **inputs,
+            early_stopping=True
+        )
         
         # Decode translations
         translations = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)

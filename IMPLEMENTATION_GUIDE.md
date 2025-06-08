@@ -29,10 +29,10 @@ This project aims to investigate the impact of dataset corrections on machine tr
   - [ ] Implement M2M-100 wrapper
   - [ ] Create unified translation interface
 
-- [ ] Create translation pipeline (`translation.py`)
-  - [ ] Implement batch translation
-  - [ ] Add translation caching
-  - [ ] Handle model-specific tokenization
+- [X] Create translation pipeline (`translation.py`)
+  - [X] Implement batch translation
+  - [X] Add translation caching
+  - [X] Handle model-specific tokenization
 
 ### 4. Evaluation System
 - [ ] Create evaluation module (`evaluation.py`)

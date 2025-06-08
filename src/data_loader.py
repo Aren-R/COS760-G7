@@ -2,7 +2,7 @@ from datasets import load_dataset
 from typing import Dict, List, Tuple
 import os
 
-def load_original_flores(languages: List[str] = ['eng', 'hau', 'nso', 'tso', 'zul']) -> Dict[str, List[str]]:
+def load_original_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul']) -> Dict[str, List[str]]:
     """
     Load the original FLORES devtest dataset for specified languages.
     

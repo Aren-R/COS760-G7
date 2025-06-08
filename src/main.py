@@ -47,11 +47,6 @@ def main():
                     batch_size=4  # Small batch size for testing
                 )
                 
-                # Print first translation as example
-                print("\nExample translation:")
-                print(f"English: {english_data['eng'][0]}")
-                print(f"{target_lang}: {translations[0]}")
-                
                 # # Evaluate translations against both original and corrected references
                 # print("\nEvaluating translations...")
                 # print("target lang: ", target_lang)
