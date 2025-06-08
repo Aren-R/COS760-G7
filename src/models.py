@@ -141,6 +141,11 @@ class OPUSMTModel(TranslationModel):
 
 def initialize_models() -> Dict[str, TranslationModel]:
     """Initialize all translation models"""
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    # print(f"\nUsing device: {device}")
+    # if device == "cuda":
+    #     print(f"GPU: {torch.cuda.get_device_name(0)}")
+    
     return {
         "nllb": NLLBModel(),
         "opus-mt": OPUSMTModel(),

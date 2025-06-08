@@ -3,23 +3,29 @@ from models import initialize_models
 from translation import TranslationPipeline
 from evaluation import TranslationEvaluator
 
-DEBUG_SIZE = 50
-TRANSLATION_BATCH_SIZE=50
+# Configuration
+DEBUG_SIZE = 100
+TRANSLATION_BATCH_SIZE = 10
+DEBUG = False
 
 def main():
-    # Load English data
+    # Load all datasets
     english_data = load_original_flores(languages=['eng'])
-    english_data = {lang: texts[:DEBUG_SIZE] for lang, texts in english_data.items()}
-
-    # Load original FLORES dataset
     original_data = load_original_flores()
-    original_data = {lang: texts[:DEBUG_SIZE] for lang, texts in original_data.items()}
+    corrected_data = load_corrected_flores()
+
+    # Truncate datasets if in DEBUG mode
+    if DEBUG:
+        print(f"\nRunning in DEBUG mode with {DEBUG_SIZE} samples per language")
+        english_data = {lang: texts[:DEBUG_SIZE] for lang, texts in english_data.items()}
+        original_data = {lang: texts[:DEBUG_SIZE] for lang, texts in original_data.items()}
+        corrected_data = {lang: texts[:DEBUG_SIZE] for lang, texts in corrected_data.items()}
+    else:
+        print("\nRunning with full dataset")
+
     print("Successfully loaded original FLORES devtest dataset")
     print(f"Available languages: {list(original_data.keys())}")
     
-    # Load corrected FLORES dataset
-    corrected_data = load_corrected_flores()
-    corrected_data = {lang: texts[:DEBUG_SIZE] for lang, texts in corrected_data.items()}
     print("\nSuccessfully loaded corrected FLORES devtest dataset")
     print(f"Available languages: {list(corrected_data.keys())}")
     
@@ -38,7 +44,7 @@ def main():
     for model_name in models.keys():
         print(f"\nUsing {model_name} model:")
         for target_lang in african_languages:
-            print(f"\nTranslating English to {target_lang}...")
+            print(f"\nTranslating to {target_lang}...")
             try:
                 translations = pipeline.translate_batch(
                     texts=english_data['eng'],
@@ -48,30 +54,27 @@ def main():
                     batch_size=TRANSLATION_BATCH_SIZE
                 )
                 
-                # # Evaluate translations against both original and corrected references
-                # print("\nEvaluating translations...")
-                # print("target lang: ", target_lang)
-                # # print(original_data[target_lang])
-                # # Get references from both datasets
-                # original_refs = original_data[target_lang]
-                # corrected_refs = corrected_data[target_lang]
-                # print("starting with scores")
-                # # Calculate BLEU scores
-                # original_scores = evaluator.evaluate_translations(
-                #     translations=translations,
-                #     references=original_refs,
-                #     metrics=['bleu']
-                # )
+                # Evaluate translations against both original and corrected references
+                print("\nEvaluating translations...")
+                print("Target lang: ", target_lang)
+                # Get references from both datasets
+                original_refs = original_data[target_lang]
+                corrected_refs = corrected_data[target_lang]
+                print("Calculating Scores:")
+                # Calculate BLEU scores
+                original_scores = evaluator.evaluate_translations(
+                    translations=translations,
+                    references=original_refs
+                )
                 
-                # corrected_scores = evaluator.evaluate_translations(
-                #     translations=translations,
-                #     references=corrected_refs,
-                #     metrics=['bleu']
-                # )
+                corrected_scores = evaluator.evaluate_translations(
+                    translations=translations,
+                    references=corrected_refs
+                )
                 
-                # print(f"\nBLEU Scores for {model_name} ({target_lang}):")
-                # print(f"Original references: {original_scores['bleu']:.4f}")
-                # print(f"Corrected references: {corrected_scores['bleu']:.4f}")
+                print(f"\nBLEU Scores for {model_name} ({target_lang}):")
+                print(f"Original references: {original_scores['bleu']:.4f}")
+                print(f"Corrected references: {corrected_scores['bleu']:.4f}")
                 
             except Exception as e:
                 print(f"Error processing {target_lang}: {str(e)}")

@@ -26,16 +26,17 @@ def _save_to_cache(cache_path: Path, data: List[str]):
 
 def load_original_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul'], use_cache: bool = True) -> Dict[str, List[str]]:
     """
-    Load the original FLORES devtest dataset for specified languages.
+    Load the original FLORES devtest dataset for specified languages from local directory.
     
     Args:
-        languages: List of language codes to load (default: ['en', 'hau', 'nso', 'tso', 'zul'])
+        languages: List of language codes to load (default: ['hau', 'nso', 'tso', 'zul'])
         use_cache: Whether to use cached dataset (default: True)
     
     Returns:
         Dictionary containing devtest splits for each language
     """
     data = {}
+    base_path = "data/original"
     print("\nLoading original FLORES dataset...")
     
     for lang in tqdm(languages, desc="Loading languages"):
@@ -47,12 +48,14 @@ def load_original_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul'], us
                 data[lang] = cached_data
                 continue
         
-        dataset = load_dataset("openlanguagedata/flores_plus", f"{lang}_Latn")
-        data[lang] = dataset['devtest']['text']
-        
-        if use_cache:
-            _save_to_cache(cache_path, data[lang])
-    
+        devtest_path = os.path.join(base_path, "devtest", f"{lang}_Latn.devtest")
+        if os.path.exists(devtest_path):
+            with open(devtest_path, 'r', encoding='utf-8') as f:
+                data[lang] = [line.strip() for line in f if line.strip()]
+            
+            if use_cache:
+                _save_to_cache(cache_path, data[lang])
+                
     return data
 
 def load_corrected_flores(languages: List[str] = ['hau', 'nso', 'tso', 'zul'], use_cache: bool = True) -> Dict[str, List[str]]:
