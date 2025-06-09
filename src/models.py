@@ -112,32 +112,36 @@ class OPUSMTModel(TranslationModel):
     def get_model_name(self) -> str:
         return "OPUS-MT"
 
-# class M2M100Model(TranslationModel):
-#     """M2M-100 model wrapper"""
+class BLOOMModel(TranslationModel):
+    """BLOOM model wrapper"""
     
-#     def __init__(self, model_name: str = "facebook/m2m100_418M"):
-#         self.model_name = model_name
-#         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-#         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-#         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
+    def __init__(self, model_name: str = "bigscience/bloom-560m"):
+        self.model_name = model_name
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
+        
+    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+        # Format the prompt for translation
+        prompts = [f"Translate from {source_lang} to {target_lang}: {text}" for text in texts]
+        
+        # Tokenize
+        inputs = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        
+        # Generate translations
+        translated_tokens = self.model.generate(
+            **inputs,
+            max_length=512,
+            num_beams=5,
+            early_stopping=True
+        )
+        
+        # Decode translations
+        translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
+        return translations
     
-#     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-#         # Set source and target languages
-#         self.tokenizer.src_lang = source_lang
-#         self.tokenizer.tgt_lang = target_lang
-        
-#         # Tokenize
-#         inputs = self.tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
-        
-#         # Generate translations
-#         translated_tokens = self.model.generate(**inputs, max_length=512)
-        
-#         # Decode translations
-#         translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
-#         return translations
-    
-#     def get_model_name(self) -> str:
-#         return "M2M-100"
+    def get_model_name(self) -> str:
+        return "BLOOM"
 
 def initialize_models() -> Dict[str, TranslationModel]:
     """Initialize all translation models"""
@@ -149,5 +153,5 @@ def initialize_models() -> Dict[str, TranslationModel]:
     return {
         "nllb": NLLBModel(),
         "opus-mt": OPUSMTModel(),
-        # "m2m100": M2M100Model()
+        "bloom": BLOOMModel()
     } 
