@@ -248,6 +248,17 @@ class TranslationEvaluator:
         # Calculate rank correlations
         correlations = self.calculate_rank_correlations(original_scores, corrected_scores)
         
+        # Calculate deltas for mean scores
+        deltas = {}
+        for metric in original_scores.keys():
+            if metric in corrected_scores:
+                orig_mean = original_scores[metric]['mean']
+                corr_mean = corrected_scores[metric]['mean']
+                if orig_mean is not None and corr_mean is not None:
+                    deltas[metric] = {
+                        'mean_delta': corr_mean - orig_mean,
+                    }
+        
         # Save scores
         scores = {
             "model": model_name,
@@ -255,7 +266,7 @@ class TranslationEvaluator:
             "metrics": {
                 "original": original_scores,
                 "corrected": corrected_scores,
-                "delta": corrected_scores-original_scores,
+                "deltas": deltas,
                 "correlations": correlations
             }
         }

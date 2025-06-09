@@ -112,37 +112,34 @@ class OPUSMTModel(TranslationModel):
     def get_model_name(self) -> str:
         return "OPUS-MT"
 
-class BLOOMModel:
-    """BLOOM model wrapper"""
+# class BLOOMModel:
+#     """BLOOM model wrapper"""
 
-    def __init__(self, model_name: str = "bigscience/bloom-560m"):
-        self.model_name = model_name
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+#     def __init__(self, model_name: str = "bigscience/bloom-560m"):
+#         self.model_name = model_name
+#         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+#         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+#         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
 
-    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        prompts = [f"Translate from {source_lang} to {target_lang}: {text}" for text in texts]
-        translations = []
+#     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+#         prompts = [f"Translate from {source_lang} to {target_lang}: {text}" for text in texts]
+#         translations = []
 
-        for prompt in prompts:
-            input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.device)
+#         for prompt in prompts:
+#             input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.device)
 
-            output_ids = self.model.generate(
-                input_ids,
-                max_length=512,
-                num_beams=5,
-                early_stopping=True
-            )
+#             output_ids = self.model.generate(
+#                 input_ids,
+#             )
 
-            decoded = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
-            translation = decoded.replace(prompt, "").strip() 
-            translations.append(translation)
+#             decoded = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
+#             translation = decoded.replace(prompt, "").strip() 
+#             translations.append(translation)
 
-        return translations
+#         return translations
 
-    def get_model_name(self) -> str:
-        return "BLOOM"
+#     def get_model_name(self) -> str:
+#         return "BLOOM"
 
 
 def initialize_models() -> Dict[str, TranslationModel]:
@@ -155,5 +152,5 @@ def initialize_models() -> Dict[str, TranslationModel]:
     return {
         "nllb": NLLBModel(),
         "opus-mt": OPUSMTModel(),
-        "bloom": BLOOMModel()
+        # "bloom": BLOOMModel()
     } 
