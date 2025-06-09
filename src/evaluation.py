@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import nltk
 from comet import download_model, load_from_checkpoint
 from bert_score import score as bert_score
@@ -7,8 +8,6 @@ import torch
 import json
 from pathlib import Path
 from scipy import stats
-from collections import defaultdict
-import sacrebleu
 
 class TranslationEvaluator:
     """Main class for evaluating machine translations using multiple metrics."""
@@ -38,64 +37,12 @@ class TranslationEvaluator:
             print(f"Warning: Could not initialize COMET model: {str(e)}")
             self.comet_model = None
     
-    def _calculate_bleu(
-        self,
-        translations: List[str],
-        references: List[str],
-        use_bootstrap: bool = False,
-        n_bootstrap: int = 1000,
-        confidence_level: float = 0.95
-    ) -> Dict[str, Union[float, List[float], Tuple[float, float]]]:
-        """
-        Calculate BLEU score using sacreBLEU, with optional bootstrapping.
-        
-        Args:
-            translations: List of translated texts
-            references: List of reference texts
-            use_bootstrap: Whether to use bootstrapping (default: False)
-            n_bootstrap: Number of bootstrap samples (default: 1000)
-            confidence_level: Confidence level for the interval (default: 0.95)
-            
-        Returns:
-            Dictionary containing BLEU scores and optional bootstrap statistics
-        """
-        if len(translations) != len(references):
-            raise ValueError("Number of translations must match number of references")
-        
-        # Prepare references in the format expected by sacreBLEU
-        refs = [[ref] for ref in references]  # sacreBLEU expects list of lists
-        
-        if use_bootstrap:
-            # Use sacreBLEU's built-in bootstrapping
-            result = sacrebleu.corpus_bleu(
-                translations,
-                refs,
-                bootstrap=True,
-                n_bootstrap=n_bootstrap,
-                confidence_level=confidence_level
-            )
-            
-            return {
-                'mean': result.score,
-                'individual': result.scores,
-                'confidence_interval': (result.lower_bound, result.upper_bound),
-                'bootstrap_samples': result.bootstrap_samples
-            }
-        else:
-            # Calculate without bootstrapping
-            result = sacrebleu.corpus_bleu(translations, refs)
-            return {
-                'mean': result.score,
-                'individual': result.scores
-            }
-
     def evaluate_translations(
         self,
         translations: List[str],
         references: List[str],
-        metrics: Optional[List[str]] = None,
-        use_bootstrap: bool = False
-    ) -> Dict[str, Dict[str, Union[float, List[float], Tuple[float, float]]]]:
+        metrics: Optional[List[str]] = None
+    ) -> Dict[str, Dict[str, Union[float, List[float]]]]:
         """
         Evaluate translations against references using specified metrics.
         
@@ -103,7 +50,6 @@ class TranslationEvaluator:
             translations: List of translated texts
             references: List of reference texts
             metrics: List of metrics to use (default: all available metrics)
-            use_bootstrap: Whether to use bootstrapping for BLEU score (default: False)
             
         Returns:
             Dictionary containing both mean scores and individual scores for each metric
@@ -115,23 +61,46 @@ class TranslationEvaluator:
         for metric in metrics:
             if metric in self.metrics:
                 try:
-                    if metric == 'bleu':
-                        scores[metric] = self._calculate_bleu(
-                            translations=translations,
-                            references=references,
-                            use_bootstrap=use_bootstrap
-                        )
-                    else:
-                        mean_score, individual_scores = self.metrics[metric](translations, references)
-                        scores[metric] = {
-                            'mean': mean_score,
-                            'individual': individual_scores
-                        }
+                    mean_score, individual_scores = self.metrics[metric](translations, references)
+                    scores[metric] = {
+                        'mean': mean_score,
+                        'individual': individual_scores
+                    }
                 except Exception as e:
                     print(f"Warning: Error calculating {metric} score: {str(e)}")
                     scores[metric] = {'mean': None, 'individual': None}
         
         return scores
+    
+    def _calculate_bleu(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
+        """
+        Calculate BLEU score for translations.
+        
+        Args:
+            translations: List of translated texts
+            references: List of reference texts
+            
+        Returns:
+            Tuple of (mean BLEU score, list of individual BLEU scores)
+        """
+        if len(translations) != len(references):
+            raise ValueError("Number of translations must match number of references")
+        
+        smoothing = SmoothingFunction().method1
+        scores = []
+        
+        for translation, reference in zip(translations, references):
+            translation_tokens = nltk.word_tokenize(translation.lower())
+            reference_tokens = [nltk.word_tokenize(ref.lower()) for ref in [reference]]
+            
+            score = sentence_bleu(
+                reference_tokens,
+                translation_tokens,
+                smoothing_function=smoothing
+            )
+            scores.append(float(score))
+        
+        return float(np.mean(scores)), scores
     
     def _calculate_comet(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
