@@ -1,7 +1,8 @@
 from data_loader import load_original_flores, load_corrected_flores
 from models import initialize_models
 from translation import TranslationPipeline
-from evaluation import TranslationEvaluator
+from evaluation import TranslationEvaluator, get_translations_by_topic
+from visualization import TranslationVisualizer
 import json
 
 # Configuration
@@ -29,6 +30,7 @@ def main():
     
     pipeline = TranslationPipeline(models)
     evaluator = TranslationEvaluator()
+    visualizer = TranslationVisualizer()
     
     african_languages = ['hau', 'nso', 'tso', 'zul']
     
@@ -38,48 +40,49 @@ def main():
         for target_lang in african_languages:
             print(f"\nTranslating to {target_lang}...")
             try:
-                translations = pipeline.translate_batch(
-                    texts=english_data['eng'],
-                    source_lang='en',
-                    target_lang=target_lang,
-                    model_name=model_name,
-                    batch_size=TRANSLATION_BATCH_SIZE
-                )
+                # translations = pipeline.translate_batch(
+                #     texts=english_data['eng'],
+                #     source_lang='en',
+                #     target_lang=target_lang,
+                #     model_name=model_name,
+                #     batch_size=TRANSLATION_BATCH_SIZE
+                # )
                 
-                print("Evaluating translations...")
-                original_refs = original_data[target_lang]
-                corrected_refs = corrected_data[target_lang]
+                # print("Evaluating translations...")
+                # original_refs = original_data[target_lang]
+                # corrected_refs = corrected_data[target_lang]
                 
-                # Calculate scores for all metrics
-                original_scores = evaluator.evaluate_translations(
-                    translations=translations,
-                    references=original_refs,
-                    metrics=['bleu', 'comet', 'bertscore']
-                )
+                # # Calculate scores for all metrics
+                # original_scores = evaluator.evaluate_translations(
+                #     translations=translations,
+                #     references=original_refs,
+                #     metrics=['bleu', 'comet', 'bertscore']
+                # )
                 
-                corrected_scores = evaluator.evaluate_translations(
-                    translations=translations,
-                    references=corrected_refs,
-                    metrics=['bleu', 'comet', 'bertscore']
-                )
+                # corrected_scores = evaluator.evaluate_translations(
+                #     translations=translations,
+                #     references=corrected_refs,
+                #     metrics=['bleu', 'comet', 'bertscore']
+                # )
                 
-                # Save individual evaluation results
-                evaluator.save_evaluation_results(
-                    model_name=model_name,
-                    target_lang=target_lang,
-                    original_scores=original_scores,
-                    corrected_scores=corrected_scores,
-                    translations=translations,
-                    original_refs=original_refs,
-                    corrected_refs=corrected_refs
-                )
+                # # Save individual evaluation results
+                # evaluator.save_evaluation_results(
+                #     model_name=model_name,
+                #     target_lang=target_lang,
+                #     original_scores=original_scores,
+                #     corrected_scores=corrected_scores,
+                #     translations=translations,
+                #     original_refs=original_refs,
+                #     corrected_refs=corrected_refs
+                # )
                 
-                print(f"Results saved for {model_name} ({target_lang})")
+                # Generate visualizations for this model and language
+                print(f"\nGenerating visualizations for {model_name} - {target_lang}...")
+                visualizer.generate_all_visualizations(model_name, target_lang)
                 
             except Exception as e:
                 print(f"Error processing {target_lang}: {str(e)}")
                 print("Skipping to next language pair...")
-    
 
 if __name__ == "__main__":
     main()

@@ -263,7 +263,48 @@ class TranslationEvaluator:
                         'mean_delta': corr_mean - orig_mean,
                     }
         
-        # Save scores
+        # Get translations by topic
+        topic_translations = get_translations_by_topic(translations, original_refs, corrected_refs)
+        
+        # Evaluate each topic separately
+        topic_scores = {}
+        for topic, topic_data in topic_translations.items():
+            # Skip topics with 5 or fewer translations
+            if len(topic_data) <= 10:
+                print(f"Skipping topic '{topic}' due to insufficient translations ({len(topic_data)} samples)")
+                continue
+                
+            topic_trans, topic_orig_refs, topic_corr_refs = zip(*topic_data)
+            
+            # Calculate scores for this topic
+            topic_original_scores = self.evaluate_translations(
+                translations=list(topic_trans),
+                references=list(topic_orig_refs),
+                metrics=list(self.metrics.keys())
+            )
+            
+            topic_corrected_scores = self.evaluate_translations(
+                translations=list(topic_trans),
+                references=list(topic_corr_refs),
+                metrics=list(self.metrics.keys())
+            )
+            
+            # Calculate correlations for this topic
+            topic_correlations = self.calculate_rank_correlations(
+                topic_original_scores,
+                topic_corrected_scores
+            )
+            
+            # Store topic-specific scores
+            topic_scores[topic] = {
+                'original': {metric: {'mean': scores['mean']} for metric, scores in topic_original_scores.items()},
+                'corrected': {metric: {'mean': scores['mean']} for metric, scores in topic_corrected_scores.items()},
+                'correlations': topic_correlations
+            }
+
+            print(topic_scores)
+        
+        # Save overall scores
         scores = {
             "model": model_name,
             "target_language": target_lang,
@@ -272,7 +313,8 @@ class TranslationEvaluator:
                 "corrected": corrected_mean_scores,
                 "deltas": deltas,
                 "correlations": correlations
-            }
+            },
+            "topic_analysis": topic_scores
         }
         
         with open(lang_dir / "scores.json", "w", encoding="utf-8") as f:
@@ -294,3 +336,48 @@ class TranslationEvaluator:
         
         with open(lang_dir / "translations.json", "w", encoding="utf-8") as f:
             json.dump(translations_data, f, ensure_ascii=False, indent=2)
+
+def get_translations_by_topic(
+    translations: List[str],
+    original_refs: List[str],
+    corrected_refs: List[str],
+    metadata_path: str = "data/metadataDevTest.json"
+) -> Dict[str, List[Tuple[str, str, str]]]:
+    """
+    Organize translations and references by topic.
+    
+    Args:
+        translations: List of translated texts
+        original_refs: List of original reference texts
+        corrected_refs: List of corrected reference texts
+        metadata_path: Path to the metadata JSON file
+        
+    Returns:
+        Dictionary mapping topics to lists of (translation, original_ref, corrected_ref) tuples
+    """
+    # Load metadata
+    with open(metadata_path, 'r', encoding='utf-8') as f:
+        metadata = json.load(f)
+    
+    # Initialize dictionary to store translations by topic
+    topic_translations = {}
+    
+    # Ensure all lists have the same length
+    if not (len(translations) == len(original_refs) == len(corrected_refs) == len(metadata)):
+        raise ValueError("All input lists must have the same length")
+    
+    # Group translations by topic
+    for trans, orig_ref, corr_ref, meta in zip(translations, original_refs, corrected_refs, metadata):
+        topic = meta.get('topic', 'unknown')
+        if topic is None:
+            topic = 'unknown'
+            
+        # Normalize topic (convert to lowercase and strip)
+        topic = topic.lower().strip()
+        
+        if topic not in topic_translations:
+            topic_translations[topic] = []
+            
+        topic_translations[topic].append((trans, orig_ref, corr_ref))
+    
+    return topic_translations
