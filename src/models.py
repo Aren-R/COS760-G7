@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, AutoModelForCausalLM
 import torch
 
 # Language code mapping for OPUS-MT
@@ -112,36 +112,38 @@ class OPUSMTModel(TranslationModel):
     def get_model_name(self) -> str:
         return "OPUS-MT"
 
-class BLOOMModel(TranslationModel):
+class BLOOMModel:
     """BLOOM model wrapper"""
-    
+
     def __init__(self, model_name: str = "bigscience/bloom-560m"):
         self.model_name = model_name
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
-        
+        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+
     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        # Format the prompt for translation
         prompts = [f"Translate from {source_lang} to {target_lang}: {text}" for text in texts]
-        
-        # Tokenize
-        inputs = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
-        
-        # Generate translations
-        translated_tokens = self.model.generate(
-            **inputs,
-            max_length=512,
-            num_beams=5,
-            early_stopping=True
-        )
-        
-        # Decode translations
-        translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
+        translations = []
+
+        for prompt in prompts:
+            input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.device)
+
+            output_ids = self.model.generate(
+                input_ids,
+                max_length=512,
+                num_beams=5,
+                early_stopping=True
+            )
+
+            decoded = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
+            translation = decoded.replace(prompt, "").strip() 
+            translations.append(translation)
+
         return translations
-    
+
     def get_model_name(self) -> str:
         return "BLOOM"
+
 
 def initialize_models() -> Dict[str, TranslationModel]:
     """Initialize all translation models"""
