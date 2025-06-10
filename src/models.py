@@ -12,6 +12,14 @@ OPUS_MT_LANG_MAP = {
     'en': 'en'   # English
 }
 
+MADLAD_LANG_MAP = {
+    'hau': 'ha',
+    'nso': 'nso',
+    'zul': 'zu',
+    'en': 'en',
+    'tso': 'ts'
+}
+
 class TranslationModel(ABC):
     """Base class for translation models"""
     
@@ -112,34 +120,37 @@ class OPUSMTModel(TranslationModel):
     def get_model_name(self) -> str:
         return "OPUS-MT"
 
-class BLOOMModel:
-    """BLOOM model wrapper"""
+class MADLADModel(TranslationModel):
+    """MADLAD-400 model wrapper for multilingual translation"""
 
-    def __init__(self, model_name: str = "bigscience/bloom-560m"):
+    def __init__(self, model_name: str = "google/madlad400-3b-mt"):
         self.model_name = model_name
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
 
     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        prompts = [f"Translate from {source_lang} to {target_lang}: {text}" for text in texts]
-        translations = []
+        # Convert language codes to MADLAD format
+        src_code = MADLAD_LANG_MAP.get(source_lang, source_lang)
+        tgt_code = MADLAD_LANG_MAP.get(target_lang, target_lang)
 
-        for prompt in prompts:
-            input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(self.device)
+        # Create prompts with language tags
+        prompts = [f"<2{tgt_code}> {text}" for text in texts]
 
-            output_ids = self.model.generate(
-                input_ids,
-            )
+        # Tokenize inputs
+        inputs = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
 
-            full_output = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
-            translation = self._extract_translation(full_output, prompt)
-            translations.append(translation)
+        # Generate translations
+        translated_tokens = self.model.generate(
+            **inputs
+        )
 
+        # Decode translations
+        translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
         return translations
 
     def get_model_name(self) -> str:
-        return "BLOOM"
+        return "MADLAD-400"
 
 
 def initialize_models() -> Dict[str, TranslationModel]:
@@ -152,5 +163,5 @@ def initialize_models() -> Dict[str, TranslationModel]:
     return {
         "nllb": NLLBModel(),
         "opus-mt": OPUSMTModel(),
-        # "bloom": BLOOMModel()
+        "madlad": MADLADModel()
     } 

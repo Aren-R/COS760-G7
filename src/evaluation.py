@@ -270,7 +270,7 @@ class TranslationEvaluator:
         topic_scores = {}
         for topic, topic_data in topic_translations.items():
             # Skip topics with 5 or fewer translations
-            if len(topic_data) <= 10:
+            if len(topic_data) <= 15:
                 print(f"Skipping topic '{topic}' due to insufficient translations ({len(topic_data)} samples)")
                 continue
                 
