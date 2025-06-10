@@ -31,3 +31,4 @@ Our work contributes to responsible NLP by highlighting how poor reference trans
 - Tiedemann, J. (2020). *OPUS-MT: Building open translation services for the World*. arXiv preprint arXiv:2005.05943.
 - Kudugunta, S. et al. (2023). *MADLAD-400: A Multilingual And Document-Level Large Audited Dataset*, arXiv [cs.CL] [Preprint]. Available at: http://arxiv.org/abs/2309.04662.
 - Team, Facebook AI. (2022). *NLLB: No Language Left Behind*. https://ai.facebook.com/research/no-language-left-behind
+- ‘No Language Left Behind: Scaling Human-Centered Machine Translation’ (2022).
