@@ -8,7 +8,7 @@ We examine the impact of manually corrected references (from Abdulmumin et al., 
 
 ## What We Did
 
-- **Model Output Evaluation**: We evaluated outputs from several MT models (NLLB, OPUS-MT, M2M-100) using both original and corrected references.
+- **Model Output Evaluation**: We evaluated outputs from several MT models (NLLB, OPUS-MT, MADLAD-400) using both original and corrected references.
 - **Ranking Analysis**: We assessed how model rankings changed post-correction and analysed which models were most robust or sensitive to reference quality.
 - **Metric Comparison**: We calculated score differences and Spearman’s correlation to measure the ranking volatility for each model-metric combination.
 - **Domain-Level Exploration**: We examined if the thematic domain of the text influenced score deltas or ranking shifts.
