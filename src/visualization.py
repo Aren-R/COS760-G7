@@ -456,17 +456,12 @@ class TranslationVisualizer:
         plt.close()
     
     def plot_all_models_analysis(self):
-        """Create a single comprehensive plot showing analysis for all models and languages."""
-        # Get all model directories
+        """Create separate comprehensive plots showing analysis for all models and languages."""
         model_dirs = [d for d in self.results_dir.iterdir() if d.is_dir()]
         if not model_dirs:
             print("No model results found")
             return
             
-        # Create figure with subplots
-        fig = plt.figure(figsize=(25, 20))
-        gs = fig.add_gridspec(2, 2)
-        
         metrics_list = ['bleu', 'comet', 'bertscore']
         african_languages = ['hau', 'nso', 'tso', 'zul']
         
@@ -492,10 +487,8 @@ class TranslationVisualizer:
         if not all_data:
             return
             
-        # 1. Overall Metric Comparison (top left)
-        ax1 = fig.add_subplot(gs[0, 0])
+        plt.figure(figsize=(15, 10))
         
-        # Prepare data for plotting
         model_lang_pairs = []
         original_scores = []
         corrected_scores = []
@@ -518,42 +511,40 @@ class TranslationVisualizer:
         x = np.arange(len(model_lang_pairs))
         width = 0.35
         
-        # Plot bars
-        orig_bars = ax1.bar(x - width/2, original_scores, width, label='Original')
-        corr_bars = ax1.bar(x + width/2, corrected_scores, width, label='Corrected')
+        orig_bars = plt.bar(x - width/2, original_scores, width, label='Original')
+        corr_bars = plt.bar(x + width/2, corrected_scores, width, label='Corrected')
         
-        # Add value labels on top of bars
         for bar in orig_bars:
             height = bar.get_height()
-            ax1.text(bar.get_x() + bar.get_width()/2., height,
+            plt.text(bar.get_x() + bar.get_width()/2., height,
                     f'{height:.5f}',
                     ha='center', va='bottom', rotation=90)
         
         for bar in corr_bars:
             height = bar.get_height()
-            ax1.text(bar.get_x() + bar.get_width()/2., height,
+            plt.text(bar.get_x() + bar.get_width()/2., height,
                     f'{height:.5f}',
                     ha='center', va='bottom', rotation=90)
         
-        ax1.set_title('Average Metric Scores Across Models and Languages')
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(model_lang_pairs, rotation=45, ha='right')
-        ax1.legend()
+        plt.title('Average Metric Scores Across Models and Languages')
+        plt.xticks(x, model_lang_pairs, rotation=45, ha='right')
+        plt.legend()
         
-        # Set y-axis formatting to show more decimal places
-        ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
-        # Force the formatter to be used
-        ax1.yaxis.set_major_locator(plt.MaxNLocator(10))
-        # Update the ticks to ensure the formatter is applied
-        ax1.yaxis.set_tick_params(which='major', labelsize=8)
+        plt.gca().yaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
+        plt.gca().yaxis.set_major_locator(plt.MaxNLocator(10))
+        plt.gca().yaxis.set_tick_params(which='major', labelsize=8)
         
-        # Adjust y-axis to accommodate labels
-        ax1.set_ylim(0, max(max(original_scores), max(corrected_scores)) * 1.15)
+
+        plt.ylim(0, max(max(original_scores), max(corrected_scores)) * 1.15)
         
-        # 2. Topic Analysis (top right)
-        ax2 = fig.add_subplot(gs[0, 1])
+        plt.tight_layout()
+        plt.savefig(self.output_dir / 'all_models_metric_comparison.png', 
+                   bbox_inches='tight', dpi=300)
+        plt.close()
         
-        # Calculate average deltas for each topic across all models and languages
+
+        plt.figure(figsize=(15, 10))
+        
         topic_deltas = {}
         for topic in all_topics:
             deltas = []
@@ -569,23 +560,24 @@ class TranslationVisualizer:
             if deltas:
                 topic_deltas[topic] = np.mean(deltas)
         
-        # Sort topics by delta magnitude
         sorted_topics = sorted(topic_deltas.keys(), 
                              key=lambda x: abs(topic_deltas[x]), 
                              reverse=True)
         sorted_deltas = [topic_deltas[topic] for topic in sorted_topics]
         
-        ax2.barh(sorted_topics, sorted_deltas)
-        ax2.set_title('Average Score Change by Topic (Across All Models and Languages)')
-        ax2.set_xlabel('Score Change (Corrected - Original)')
+        plt.barh(sorted_topics, sorted_deltas)
+        plt.title('Average Score Change by Topic (Across All Models and Languages)')
+        plt.xlabel('Score Change (Corrected - Original)')
         
-        # Set x-axis formatting to show more decimal places
-        ax2.xaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
+        plt.gca().xaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
         
-        # 3. Correlation Analysis (bottom left)
-        ax3 = fig.add_subplot(gs[1, 0])
+        plt.tight_layout()
+        plt.savefig(self.output_dir / 'all_models_topic_analysis.png', 
+                   bbox_inches='tight', dpi=300)
+        plt.close()
         
-        # Calculate average correlations across all models and languages
+        plt.figure(figsize=(15, 10))
+        
         avg_corr_matrix = np.zeros((len(sorted_topics), len(metrics_list)))
         for i, topic in enumerate(sorted_topics):
             for j, metric in enumerate(metrics_list):
@@ -604,14 +596,18 @@ class TranslationVisualizer:
                    cmap='RdYlBu',
                    center=0,
                    annot=True,
-                   fmt='.5f',
-                   ax=ax3)
-        ax3.set_title('Average Correlation Analysis (Across All Models and Languages)')
+                   fmt='.5f')
+        plt.title('Average Correlation Analysis (Across All Models and Languages)')
         
-        # 4. Metric Deltas by Topic (bottom right)
-        ax4 = fig.add_subplot(gs[1, 1])
+        plt.tight_layout()
+        plt.savefig(self.output_dir / 'all_models_correlation_analysis.png', 
+                   bbox_inches='tight', dpi=300)
+        plt.close()
         
-        # Calculate average deltas across all models and languages
+
+        plt.figure(figsize=(15, 10))
+        
+
         avg_delta_matrix = np.zeros((len(sorted_topics), len(metrics_list)))
         for i, topic in enumerate(sorted_topics):
             for j, metric in enumerate(metrics_list):
@@ -633,16 +629,11 @@ class TranslationVisualizer:
                    cmap='RdYlBu',
                    center=0,
                    annot=True,
-                   fmt='.5f',
-                   ax=ax4)
-        ax4.set_title('Average Score Changes by Topic and Metric (Across All Models and Languages)')
+                   fmt='.5f')
+        plt.title('Average Score Changes by Topic and Metric (Across All Models and Languages)')
         
-        # Add overall title
-        fig.suptitle('Combined Translation Analysis Across All Models and Languages', y=1.02, fontsize=16)
         plt.tight_layout()
-        
-        # Save the combined plot
-        plt.savefig(self.output_dir / 'all_models_combined_analysis.png', 
+        plt.savefig(self.output_dir / 'all_models_metric_deltas.png', 
                    bbox_inches='tight', dpi=300)
         plt.close()
     
