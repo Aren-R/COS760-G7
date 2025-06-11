@@ -653,14 +653,14 @@ class TranslationVisualizer:
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        if model_name is None:
-            # Generate combined analysis for all models
-            self.plot_all_models_analysis()
-        elif target_lang is None:
-            # Generate combined analysis for a single model
-            self.plot_combined_analysis(model_name)
-        else:
-            # Generate analysis for a single model and language
-            self.plot_combined_analysis(model_name, target_lang)
+        # if model_name is None:
+        #     # Generate combined analysis for all models
+        self.plot_all_models_analysis()
+        # elif target_lang is None:
+        #     # Generate combined analysis for a single model
+        #     self.plot_combined_analysis(model_name)
+        # else:
+        #     # Generate analysis for a single model and language
+        self.plot_combined_analysis(model_name, target_lang)
         
         print(f"Visualizations saved to {self.output_dir}")

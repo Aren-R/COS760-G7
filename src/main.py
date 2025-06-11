@@ -99,6 +99,7 @@ def main():
     #---------------------------------------------------------------------------------------------
 
     # CREATE VISUALISATIONS-----------------------------------------------------------------------
+    # TODO: Bad conditional logic to generate visualisations, refine visualisations
     if RUN_VISUALIZATIONS:
         print("\nGenerating visualizations...")
         for model_name in models.keys():
