@@ -26,3 +26,4 @@ sacremoses>=0.0.53
 # Visualization
 matplotlib>=3.5.0
 seaborn>=0.11.0
+import evaluate

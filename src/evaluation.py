@@ -8,6 +8,7 @@ import torch
 import json
 from pathlib import Path
 from scipy import stats
+import evaluate
 
 class TranslationEvaluator:
     """Main class for evaluating machine translations using multiple metrics."""
@@ -72,7 +73,7 @@ class TranslationEvaluator:
         
         return scores
     
-    def _calculate_bleu(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
+        def _calculate_bleu(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
         Calculate BLEU score for translations.
         
@@ -86,22 +87,16 @@ class TranslationEvaluator:
         if len(translations) != len(references):
             raise ValueError("Number of translations must match number of references")
         
-        smoothing = SmoothingFunction().method1
+        bleu = evaluate.load("bleu")
+        
+        # Calculate BLEU scores
         scores = []
-        
         for translation, reference in zip(translations, references):
-            translation_tokens = nltk.word_tokenize(translation.lower())
-            reference_tokens = [nltk.word_tokenize(ref.lower()) for ref in [reference]]
-            
-            score = sentence_bleu(
-                reference_tokens,
-                translation_tokens,
-                smoothing_function=smoothing
-            )
-            scores.append(float(score))
+            result = bleu.compute(predictions=[translation], references=[[reference]])
+            scores.append(float(result['bleu']))
         
-        return float(np.mean(scores)), scores
-    
+        return float(np.mean(scores)), scoress
+        
     def _calculate_comet(self, translations: List[str], references: List[str]) -> Tuple[float, List[float]]:
         """
         Calculate COMET score for translations.
