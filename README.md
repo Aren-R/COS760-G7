@@ -15,7 +15,27 @@ We examine the impact of manually corrected references (from Abdulmumin et al., 
 
 ## Key Insights from Corrections
 
-**_TODO_**
+- **Minimal Score Shifts**: Unlike Abdulmumin et al. (2024), who observed up to a 16% score change, we saw minimal differences between the original and corrected datasets, suggesting that models have since been trained on the improved data.
+
+- **Stable Model Rankings**: Corrections did not significantly alter the relative performance of models. Rankings remained largely consistent across metrics.
+
+- **Best & Worst Performers**:  
+  - *Best*: **NLLB-200-distilled-600M** performed best overall across languages.  
+  - *Worst*: **MADLAD400-3b-mt**, despite being the largest and most multilingual model, it underperformed which highlighted the fact that language coverage may matter more than parameter size.
+
+- **Language Trends**: Models consistently performed best when translating **English to Hausa**, likely due to Hausa being the highest-resource language in the evaluation, further proving the resource to performance link.
+
+- **Domain Performance**:  
+  - *Weakest*: Entertainment domain, likely due to a lack of such content in African languages.  
+  - *Strongest*: Health, politics, and travel—domains with more translatable vocabularies.
+
+- **Statistical Consistency**: Spearman Rank correlation in model rankings was high and statistically significant (p < 10⁻⁷), confirming consistency in evaluations.
+
+- **Challenges Identified**:  
+  - Difficulty locating models supporting all target languages due to inconsistent documentation and code standards.  
+  - High computational demands despite no model training, posing challenges for reproducibility.  
+  - Time-sensitive nature of evaluation since dataset corrections get integrated rapidly, limiting window for comparative impact analysis.
+
 
 ## How to Use This Work
 
@@ -24,6 +44,11 @@ Use our findings to better understand how MT model rankings are affected by data
 ## Responsible NLP Statement
 
 Our work contributes to responsible NLP by highlighting how poor reference translations can unfairly penalise or benefit certain models, especially in low-resource settings. Ensuring reliable evaluation is crucial for the ethical development of MT tools that may influence education, information access, and digital equity in African communities.
+
+## How to run
+pip install -r requirements.txt
+python src/main.py
+
 
 ## Acknowledgments
 
