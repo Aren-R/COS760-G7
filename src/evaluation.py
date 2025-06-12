@@ -19,17 +19,15 @@ class TranslationEvaluator:
             'comet': self._calculate_comet,
             'bertscore': self._calculate_bertscore
         }
-        # Create results directory
+
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(parents=True, exist_ok=True)
         
-        # Download required NLTK data
         try:
             nltk.data.find('tokenizers/punkt')
         except LookupError:
             nltk.download('punkt')
         
-        # Initialize COMET model
         try:
             model_path = download_model("Unbabel/wmt22-comet-da")
             self.comet_model = load_from_checkpoint(model_path)
@@ -118,7 +116,6 @@ class TranslationEvaluator:
         if len(translations) != len(references):
             raise ValueError("Number of translations must match number of references")
         
-        # Prepare data for COMET
         data = [
             {
                 "src": "This is a placeholder source text",  # COMET requires source text
@@ -128,7 +125,6 @@ class TranslationEvaluator:
             for translation, reference in zip(translations, references)
         ]
         
-        # Get model predictions
         model_output = self.comet_model.predict(data, batch_size=8, gpus=1 if torch.cuda.is_available() else 0)
         scores = [float(score) for score in model_output.scores]
         return float(np.mean(scores)), scores
@@ -147,7 +143,6 @@ class TranslationEvaluator:
         if len(translations) != len(references):
             raise ValueError("Number of translations must match number of references")
         
-        # Calculate BERTScore
         P, R, F1 = bert_score(
             translations,
             references,
@@ -158,23 +153,6 @@ class TranslationEvaluator:
         scores = [float(score) for score in F1]
         return float(F1.mean().item()), scores
     
-    def compare_rankings(
-        self,
-        original_scores: Dict[str, Dict[str, float]],
-        corrected_scores: Dict[str, Dict[str, float]]
-    ) -> Dict[str, Dict[str, float]]:
-        """
-        Compare rankings between original and corrected reference scores.
-        
-        Args:
-            original_scores: Dictionary of scores using original references
-            corrected_scores: Dictionary of scores using corrected references
-            
-        Returns:
-            Dictionary containing ranking comparison metrics
-        """
-        # TODO: Implement ranking comparison
-        pass
 
     def calculate_rank_correlations(
         self,
@@ -236,22 +214,17 @@ class TranslationEvaluator:
             original_refs: List of original references
             corrected_refs: List of corrected references
         """
-        # Create model-specific directory
         model_dir = self.results_dir / model_name
         model_dir.mkdir(exist_ok=True)
         
-        # Create language-specific directory
         lang_dir = model_dir / target_lang
         lang_dir.mkdir(exist_ok=True)
         
-        # Calculate rank correlations
         correlations = self.calculate_rank_correlations(original_scores, corrected_scores)
         
-        # Create new dictionaries with only mean scores
         original_mean_scores = {metric: {'mean': scores['mean']} for metric, scores in original_scores.items()}
         corrected_mean_scores = {metric: {'mean': scores['mean']} for metric, scores in corrected_scores.items()}
         
-        # Calculate deltas for mean scores
         deltas = {}
         for metric in original_scores.keys():
             if metric in corrected_scores:
@@ -262,20 +235,16 @@ class TranslationEvaluator:
                         'mean_delta': corr_mean - orig_mean,
                     }
         
-        # Get translations by topic
         topic_translations = get_translations_by_topic(translations, original_refs, corrected_refs)
         
-        # Evaluate each topic separately
         topic_scores = {}
         for topic, topic_data in topic_translations.items():
-            # Skip topics with 5 or fewer translations
             if len(topic_data) <= 15:
                 print(f"Skipping topic '{topic}' due to insufficient translations ({len(topic_data)} samples)")
                 continue
                 
             topic_trans, topic_orig_refs, topic_corr_refs = zip(*topic_data)
             
-            # Calculate scores for this topic
             topic_original_scores = self.evaluate_translations(
                 translations=list(topic_trans),
                 references=list(topic_orig_refs),
@@ -288,13 +257,11 @@ class TranslationEvaluator:
                 metrics=list(self.metrics.keys())
             )
             
-            # Calculate correlations for this topic
             topic_correlations = self.calculate_rank_correlations(
                 topic_original_scores,
                 topic_corrected_scores
             )
             
-            # Store topic-specific scores
             topic_scores[topic] = {
                 'original': {metric: {'mean': scores['mean']} for metric, scores in topic_original_scores.items()},
                 'corrected': {metric: {'mean': scores['mean']} for metric, scores in topic_corrected_scores.items()},
@@ -303,7 +270,6 @@ class TranslationEvaluator:
 
             print(topic_scores)
         
-        # Save overall scores
         scores = {
             "model": model_name,
             "target_language": target_lang,
@@ -319,7 +285,6 @@ class TranslationEvaluator:
         with open(lang_dir / "scores.json", "w", encoding="utf-8") as f:
             json.dump(scores, f, ensure_ascii=False, indent=2)
         
-        # Save translations and references
         translations_data = {
             "model": model_name,
             "target_language": target_lang,
@@ -354,24 +319,19 @@ def get_translations_by_topic(
     Returns:
         Dictionary mapping topics to lists of (translation, original_ref, corrected_ref) tuples
     """
-    # Load metadata
     with open(metadata_path, 'r', encoding='utf-8') as f:
         metadata = json.load(f)
     
-    # Initialize dictionary to store translations by topic
     topic_translations = {}
     
-    # Ensure all lists have the same length
     if not (len(translations) == len(original_refs) == len(corrected_refs) == len(metadata)):
         raise ValueError("All input lists must have the same length")
     
-    # Group translations by topic
     for trans, orig_ref, corr_ref, meta in zip(translations, original_refs, corrected_refs, metadata):
         topic = meta.get('topic', 'unknown')
         if topic is None:
             topic = 'unknown'
             
-        # Normalize topic (convert to lowercase and strip)
         topic = topic.lower().strip()
         
         if topic not in topic_translations:

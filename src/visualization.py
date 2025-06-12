@@ -14,7 +14,6 @@ class TranslationVisualizer:
         self.output_dir = Path("results/visualizations")
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Set style for all plots
         plt.style.use('seaborn-v0_8')
         sns.set_palette("husl")
     
@@ -29,7 +28,6 @@ class TranslationVisualizer:
         results = self.load_evaluation_results(model_name, target_lang)
         metrics = results['metrics']
         
-        # Create a figure with subplots for each metric
         metrics_list = ['bleu', 'comet', 'bertscore']
         fig, axes = plt.subplots(1, len(metrics_list), figsize=(15, 5))
         fig.suptitle(f'Original vs Corrected Scores - {model_name} ({target_lang})')
@@ -47,7 +45,6 @@ class TranslationVisualizer:
                 ax.set_title(f'{metric.upper()} Score')
                 ax.set_ylim(0, max(y) * 1.1)
                 
-                # Add value labels on top of bars
                 for bar in bars:
                     height = bar.get_height()
                     ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -66,24 +63,20 @@ class TranslationVisualizer:
         if not topic_scores:
             return
         
-        # Prepare data for plotting
         metrics = ['bleu', 'comet', 'bertscore']
         topics = list(topic_scores.keys())
         
-        # Create a figure with subplots for each metric
         fig, axes = plt.subplots(1, len(metrics), figsize=(15, 5))
         fig.suptitle(f'Topic Analysis - {model_name} ({target_lang})')
         
         for idx, metric in enumerate(metrics):
             ax = axes[idx]
             
-            # Prepare data for this metric
             original_scores = [topic_scores[topic]['original'][metric]['mean'] 
                              for topic in topics]
             corrected_scores = [topic_scores[topic]['corrected'][metric]['mean'] 
                               for topic in topics]
             
-            # Create grouped bar chart
             x = np.arange(len(topics))
             width = 0.35
             
@@ -107,18 +100,15 @@ class TranslationVisualizer:
         if not topic_scores:
             return
         
-        # Prepare correlation data
         topics = list(topic_scores.keys())
         metrics = ['bleu', 'comet', 'bertscore']
         
-        # Create correlation matrix
         corr_matrix = np.zeros((len(topics), len(metrics)))
         for i, topic in enumerate(topics):
             for j, metric in enumerate(metrics):
                 if metric in topic_scores[topic]['correlations']:
                     corr_matrix[i, j] = topic_scores[topic]['correlations'][metric]['correlation']
         
-        # Create heatmap
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, 
                    xticklabels=metrics,
@@ -141,11 +131,9 @@ class TranslationVisualizer:
         if not topic_scores:
             return
         
-        # Prepare delta data
         topics = list(topic_scores.keys())
         metrics = ['bleu', 'comet', 'bertscore']
         
-        # Calculate deltas for each topic and metric
         delta_matrix = np.zeros((len(topics), len(metrics)))
         for i, topic in enumerate(topics):
             for j, metric in enumerate(metrics):
@@ -154,7 +142,6 @@ class TranslationVisualizer:
                     corrected = topic_scores[topic]['corrected'][metric]['mean']
                     delta_matrix[i, j] = corrected - original
         
-        # Create heatmap
         plt.figure(figsize=(10, 8))
         sns.heatmap(delta_matrix,
                    xticklabels=metrics,
@@ -172,15 +159,12 @@ class TranslationVisualizer:
     def plot_combined_analysis(self, model_name: str, target_lang: str = None):
         """Create a single comprehensive plot showing all analysis aspects."""
         if target_lang:
-            # Single language analysis
             results = self.load_evaluation_results(model_name, target_lang)
             self._create_analysis_plot(model_name, target_lang, results)
         else:
-            # Combined language analysis
             african_languages = ['hau', 'nso', 'tso', 'zul']
             all_results = {}
             
-            # Load results for all languages
             for lang in african_languages:
                 try:
                     results = self.load_evaluation_results(model_name, lang)
@@ -192,16 +176,13 @@ class TranslationVisualizer:
             if not all_results:
                 return
                 
-            # Create figure with subplots
             fig = plt.figure(figsize=(20, 15))
             gs = fig.add_gridspec(2, 2)
             
             metrics_list = ['bleu', 'comet', 'bertscore']
             
-            # 1. Overall Metric Comparison (top left)
             ax1 = fig.add_subplot(gs[0, 0])
             
-            # Prepare data for plotting
             model_lang_pairs = []
             original_scores = []
             corrected_scores = []
@@ -215,7 +196,6 @@ class TranslationVisualizer:
                     original_scores.append(orig_score)
                     corrected_scores.append(corr_score)
             
-            # Sort by original score for better visualization
             sorted_indices = np.argsort(original_scores)
             model_lang_pairs = [model_lang_pairs[i] for i in sorted_indices]
             original_scores = [original_scores[i] for i in sorted_indices]
@@ -224,11 +204,9 @@ class TranslationVisualizer:
             x = np.arange(len(model_lang_pairs))
             width = 0.35
             
-            # Plot bars
             orig_bars = ax1.bar(x - width/2, original_scores, width, label='Original')
             corr_bars = ax1.bar(x + width/2, corrected_scores, width, label='Corrected')
             
-            # Add value labels on top of bars
             for bar in orig_bars:
                 height = bar.get_height()
                 ax1.text(bar.get_x() + bar.get_width()/2., height,
@@ -246,20 +224,14 @@ class TranslationVisualizer:
             ax1.set_xticklabels(model_lang_pairs, rotation=45, ha='right')
             ax1.legend()
             
-            # Set y-axis formatting to show more decimal places
             ax1.yaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
-            # Force the formatter to be used
             ax1.yaxis.set_major_locator(plt.MaxNLocator(10))
-            # Update the ticks to ensure the formatter is applied
             ax1.yaxis.set_tick_params(which='major', labelsize=8)
             
-            # Adjust y-axis to accommodate labels
             ax1.set_ylim(0, max(max(original_scores), max(corrected_scores)) * 1.15)
             
-            # 2. Topic Analysis (top right)
             ax2 = fig.add_subplot(gs[0, 1])
             
-            # Collect all topics and their deltas
             all_topics = set()
             topic_deltas = {}
             
@@ -278,10 +250,8 @@ class TranslationVisualizer:
                             deltas.append(corr - orig)
                     topic_deltas[topic].append(np.mean(deltas))
             
-            # Calculate average delta across languages for each topic
             avg_deltas = {topic: np.mean(deltas) for topic, deltas in topic_deltas.items()}
             
-            # Sort topics by delta magnitude
             sorted_topics = sorted(avg_deltas.keys(), 
                                  key=lambda x: abs(avg_deltas[x]), 
                                  reverse=True)
@@ -291,13 +261,10 @@ class TranslationVisualizer:
             ax2.set_title('Average Score Change by Topic (Across Languages)')
             ax2.set_xlabel('Score Change (Corrected - Original)')
             
-            # Set x-axis formatting to show more decimal places
             ax2.xaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
             
-            # 3. Correlation Analysis (bottom left)
             ax3 = fig.add_subplot(gs[1, 0])
             
-            # Calculate average correlations across languages
             avg_corr_matrix = np.zeros((len(sorted_topics), len(metrics_list)))
             for i, topic in enumerate(sorted_topics):
                 for j, metric in enumerate(metrics_list):
@@ -319,10 +286,8 @@ class TranslationVisualizer:
                        ax=ax3)
             ax3.set_title('Average Correlation Analysis (Across Languages)')
             
-            # 4. Metric Deltas by Topic (bottom right)
             ax4 = fig.add_subplot(gs[1, 1])
             
-            # Calculate average deltas across languages
             avg_delta_matrix = np.zeros((len(sorted_topics), len(metrics_list)))
             for i, topic in enumerate(sorted_topics):
                 for j, metric in enumerate(metrics_list):
@@ -347,11 +312,9 @@ class TranslationVisualizer:
                        ax=ax4)
             ax4.set_title('Average Score Changes by Topic and Metric (Across Languages)')
             
-            # Add overall title
             fig.suptitle(f'Combined Translation Analysis - {model_name}', y=1.02, fontsize=16)
             plt.tight_layout()
             
-            # Save the combined plot
             plt.savefig(self.output_dir / f'{model_name}_combined_analysis.png', 
                        bbox_inches='tight', dpi=300)
             plt.close()
@@ -364,11 +327,9 @@ class TranslationVisualizer:
         if not topic_scores:
             return
         
-        # Create figure with subplots
         fig = plt.figure(figsize=(15, 10))
         gs = fig.add_gridspec(2, 2)
         
-        # 1. Overall Metric Comparison (top left)
         ax1 = fig.add_subplot(gs[0, 0])
         metrics_list = ['bleu', 'comet', 'bertscore']
         x = np.arange(len(metrics_list))
@@ -384,11 +345,9 @@ class TranslationVisualizer:
         ax1.set_xticklabels([m.upper() for m in metrics_list])
         ax1.legend()
         
-        # 2. Topic Analysis (top right)
         ax2 = fig.add_subplot(gs[0, 1])
         topics = list(topic_scores.keys())
         
-        # Calculate average deltas across all metrics for each topic
         topic_deltas = []
         for topic in topics:
             deltas = []
@@ -399,7 +358,6 @@ class TranslationVisualizer:
                     deltas.append(corr - orig)
             topic_deltas.append(np.mean(deltas))
         
-        # Sort topics by delta magnitude
         sorted_indices = np.argsort(np.abs(topic_deltas))[::-1]
         sorted_topics = [topics[i] for i in sorted_indices]
         sorted_deltas = [topic_deltas[i] for i in sorted_indices]
@@ -408,7 +366,6 @@ class TranslationVisualizer:
         ax2.set_title('Average Score Change by Topic')
         ax2.set_xlabel('Score Change (Corrected - Original)')
         
-        # 3. Correlation Analysis (bottom left)
         ax3 = fig.add_subplot(gs[1, 0])
         corr_matrix = np.zeros((len(topics), len(metrics_list)))
         for i, topic in enumerate(topics):
@@ -426,7 +383,6 @@ class TranslationVisualizer:
                    ax=ax3)
         ax3.set_title('Correlation Analysis')
         
-        # 4. Metric Deltas by Topic (bottom right)
         ax4 = fig.add_subplot(gs[1, 1])
         delta_matrix = np.zeros((len(topics), len(metrics_list)))
         for i, topic in enumerate(topics):
@@ -446,11 +402,9 @@ class TranslationVisualizer:
                    ax=ax4)
         ax4.set_title('Score Changes by Topic and Metric')
         
-        # Add overall title
         fig.suptitle(f'Translation Analysis - {model_name} ({target_lang})', y=1.02, fontsize=16)
         plt.tight_layout()
         
-        # Save the combined plot
         plt.savefig(self.output_dir / f'{model_name}_{target_lang}_combined_analysis.png', 
                    bbox_inches='tight', dpi=300)
         plt.close()
@@ -465,7 +419,6 @@ class TranslationVisualizer:
         metrics_list = ['bleu', 'comet', 'bertscore']
         african_languages = ['hau', 'nso', 'tso', 'zul']
         
-        # Collect all data
         all_data = {}
         all_topics = set()
         
@@ -478,7 +431,6 @@ class TranslationVisualizer:
                     results = self.load_evaluation_results(model_name, lang)
                     all_data[model_name][lang] = results
                     
-                    # Collect topics
                     topic_scores = results.get('topic_analysis', {})
                     all_topics.update(topic_scores.keys())
                 except FileNotFoundError:
@@ -502,7 +454,6 @@ class TranslationVisualizer:
                 original_scores.append(orig_score)
                 corrected_scores.append(corr_score)
         
-        # Sort by original score for better visualization
         sorted_indices = np.argsort(original_scores)
         model_lang_pairs = [model_lang_pairs[i] for i in sorted_indices]
         original_scores = [original_scores[i] for i in sorted_indices]
@@ -641,17 +592,9 @@ class TranslationVisualizer:
         """Generate visualization plots."""
         print("Generating visualizations...")
         
-        # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # if model_name is None:
-        #     # Generate combined analysis for all models
         self.plot_all_models_analysis()
-        # elif target_lang is None:
-        #     # Generate combined analysis for a single model
-        #     self.plot_combined_analysis(model_name)
-        # else:
-        #     # Generate analysis for a single model and language
         self.plot_combined_analysis(model_name, target_lang)
         
         print(f"Visualizations saved to {self.output_dir}")

@@ -3,13 +3,12 @@ from typing import List, Dict
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, AutoModelForCausalLM
 import torch
 
-# Language code mapping for OPUS-MT
 OPUS_MT_LANG_MAP = {
-    'hau': 'ha',  # Hausa
-    'nso': 'nso', # Northern Sotho
-    'tso': 'ts',  # Xitsonga
-    'zul': 'zu',  # isiZulu
-    'en': 'en'   # English
+    'hau': 'ha',
+    'nso': 'nso',
+    'tso': 'ts',
+    'zul': 'zu',
+    'en': 'en'
 }
 
 MADLAD_LANG_MAP = {
@@ -46,17 +45,14 @@ class NLLBModel(TranslationModel):
         src_lang_code = f"{source_lang}_Latn"
         tgt_lang_code = f"{target_lang}_Latn"
         
-        # Tokenize with source language
         inputs = self.tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
         
-        # Generate translations
         translated_tokens = self.model.generate(
             **inputs,
             forced_bos_token_id=self.tokenizer.convert_tokens_to_ids(tgt_lang_code),
             max_length=512
         )
         
-        # Decode translations
         translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
         return translations
     
@@ -72,7 +68,6 @@ class OPUSMTModel(TranslationModel):
     
     def _get_model_name(self, source_lang: str, target_lang: str) -> str:
         """Get the appropriate OPUS-MT model name for the language pair"""
-        # Convert language codes to OPUS-MT format
         src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
         tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
         if (tgt_code == "zu"):
@@ -96,7 +91,6 @@ class OPUSMTModel(TranslationModel):
         return self.models[model_name]
     
     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        # Load the appropriate model for this language pair
         model_data = self._load_model(source_lang, target_lang)
         tokenizer = model_data['tokenizer']
         model = model_data['model']
@@ -107,7 +101,6 @@ class OPUSMTModel(TranslationModel):
         else:
             inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
         
-        # Generate translations with proper max_length and early_stopping
         translated_tokens = model.generate(
             **inputs,
             early_stopping=True
@@ -130,22 +123,17 @@ class MADLADModel(TranslationModel):
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
 
     def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        # Convert language codes to MADLAD format
         src_code = MADLAD_LANG_MAP.get(source_lang, source_lang)
         tgt_code = MADLAD_LANG_MAP.get(target_lang, target_lang)
 
-        # Create prompts with language tags
         prompts = [f"<2{tgt_code}> {text}" for text in texts]
 
-        # Tokenize inputs
         inputs = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
 
-        # Generate translations
         translated_tokens = self.model.generate(
             **inputs
         )
 
-        # Decode translations
         translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
         return translations
 
@@ -155,11 +143,6 @@ class MADLADModel(TranslationModel):
 
 def initialize_models() -> Dict[str, TranslationModel]:
     """Initialize all translation models"""
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # print(f"\nUsing device: {device}")
-    # if device == "cuda":
-    #     print(f"GPU: {torch.cuda.get_device_name(0)}")
-    
     return {
         "nllb": NLLBModel(),
         "opus-mt": OPUSMTModel(),

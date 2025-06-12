@@ -74,10 +74,8 @@ class TranslationPipeline:
             cache_path = self._get_cache_path(model_name, source_lang, target_lang)
             cache = self._load_cache(cache_path)
         
-        # Tokenize input texts
         tokenized_texts = self._tokenize_batch(texts, source_lang)
         
-        # Process in batches with progress bar
         translations = []
         total_batches = (len(tokenized_texts) + batch_size - 1) // batch_size
         
@@ -85,7 +83,6 @@ class TranslationPipeline:
         for i in tqdm(range(0, len(tokenized_texts), batch_size), desc="Processing batches", total=total_batches):
             batch = tokenized_texts[i:i + batch_size]
             
-            # Check cache for each text in batch
             batch_translations = []
             texts_to_translate = []
             indices_to_translate = []
@@ -97,26 +94,21 @@ class TranslationPipeline:
                     texts_to_translate.append(text)
                     indices_to_translate.append(j)
             
-            # Translate texts not in cache
             if texts_to_translate:
                 new_translations = model.translate(texts_to_translate, source_lang, target_lang)
                 
-                # Update cache
                 if use_cache:
                     for text, translation in zip(texts_to_translate, new_translations):
                         cache[text] = translation
                 
-                # Insert translations at correct positions
                 for idx, translation in zip(indices_to_translate, new_translations):
                     batch_translations.insert(idx, translation)
             
             translations.extend(batch_translations)
         
-        # Save updated cache
         if use_cache:
             self._save_cache(cache_path, cache)
         
-        # Detokenize translations
         return self._detokenize_batch(translations, target_lang)
     
     def translate_dataset(

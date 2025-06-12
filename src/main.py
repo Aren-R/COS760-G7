@@ -5,13 +5,13 @@ from evaluation import TranslationEvaluator, get_translations_by_topic
 from visualization import TranslationVisualizer
 
 # Configuration
-TRUNCATED_DATASET_SIZE = 100
+TRUNCATED_DATASET_SIZE = 1012
 TRANSLATION_BATCH_SIZE = 10
-TRUNCATE_DATASET = False
+TRUNCATE_DATASET = False  
 
 # Section Control Flags
-RUN_TRANSLATIONS = False
-RUN_EVALUATIONS = False
+RUN_TRANSLATIONS = True
+RUN_EVALUATIONS = True
 RUN_VISUALIZATIONS = True
 
 
