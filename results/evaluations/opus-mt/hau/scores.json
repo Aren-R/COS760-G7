@@ -1,0 +1,435 @@
+{
+  "model": "opus-mt",
+  "target_language": "hau",
+  "metrics": {
+    "original": {
+      "bleu": {
+        "mean": 0.05823515069664319
+      },
+      "comet": {
+        "mean": 0.6605066980268408
+      },
+      "bertscore": {
+        "mean": 0.8555364012718201
+      }
+    },
+    "corrected": {
+      "bleu": {
+        "mean": 0.05827061275151965
+      },
+      "comet": {
+        "mean": 0.6602659331185544
+      },
+      "bertscore": {
+        "mean": 0.8552433252334595
+      }
+    },
+    "deltas": {
+      "bleu": {
+        "mean_delta": 3.546205487646448e-05
+      },
+      "comet": {
+        "mean_delta": -0.00024076490828639496
+      },
+      "bertscore": {
+        "mean_delta": -0.0002930760383605957
+      }
+    },
+    "correlations": {
+      "bleu": {
+        "correlation": 0.9888965798842326,
+        "p_value": 0.0
+      },
+      "comet": {
+        "correlation": 0.9954637286845353,
+        "p_value": 0.0
+      },
+      "bertscore": {
+        "correlation": 0.9865180365456545,
+        "p_value": 0.0
+      }
+    }
+  },
+  "topic_analysis": {
+    "health": {
+      "original": {
+        "bleu": {
+          "mean": 0.06875778237054418
+        },
+        "comet": {
+          "mean": 0.6429500968559928
+        },
+        "bertscore": {
+          "mean": 0.8526639342308044
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.06875778237054418
+        },
+        "comet": {
+          "mean": 0.6429500968559928
+        },
+        "bertscore": {
+          "mean": 0.8526639342308044
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "comet": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "bertscore": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        }
+      }
+    },
+    "sports": {
+      "original": {
+        "bleu": {
+          "mean": 0.03999484033615537
+        },
+        "comet": {
+          "mean": 0.5728980482388766
+        },
+        "bertscore": {
+          "mean": 0.8417130708694458
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.03887075583817071
+        },
+        "comet": {
+          "mean": 0.5731814301166779
+        },
+        "bertscore": {
+          "mean": 0.8412624001502991
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9951412086243547,
+          "p_value": 7.365402096109725e-39
+        },
+        "comet": {
+          "correlation": 0.9987854251012147,
+          "p_value": 5.513528672849531e-50
+        },
+        "bertscore": {
+          "correlation": 0.9941295546558705,
+          "p_value": 2.416473811619729e-37
+        }
+      }
+    },
+    "politics": {
+      "original": {
+        "bleu": {
+          "mean": 0.05280409358978632
+        },
+        "comet": {
+          "mean": 0.6373476657797309
+        },
+        "bertscore": {
+          "mean": 0.8515496850013733
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.05280409358978632
+        },
+        "comet": {
+          "mean": 0.6375045498796538
+        },
+        "bertscore": {
+          "mean": 0.8513472080230713
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9999999999999999,
+          "p_value": 0.0
+        },
+        "comet": {
+          "correlation": 0.9997285067873302,
+          "p_value": 1.1366455008699057e-81
+        },
+        "bertscore": {
+          "correlation": 0.9997285067873302,
+          "p_value": 1.1366455008699057e-81
+        }
+      }
+    },
+    "entertainment": {
+      "original": {
+        "bleu": {
+          "mean": 0.04001387560004679
+        },
+        "comet": {
+          "mean": 0.6509594118595123
+        },
+        "bertscore": {
+          "mean": 0.854397714138031
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.042593833868433316
+        },
+        "comet": {
+          "mean": 0.6485008990764618
+        },
+        "bertscore": {
+          "mean": 0.8528842329978943
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9176923076923077,
+          "p_value": 1.0714712558883658e-10
+        },
+        "comet": {
+          "correlation": 0.9715384615384616,
+          "p_value": 6.951868330574163e-16
+        },
+        "bertscore": {
+          "correlation": 0.976923076923077,
+          "p_value": 6.398793451503927e-17
+        }
+      }
+    },
+    "travel": {
+      "original": {
+        "bleu": {
+          "mean": 0.044578852083104845
+        },
+        "comet": {
+          "mean": 0.6579280728167229
+        },
+        "bertscore": {
+          "mean": 0.8539057374000549
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.04319073413183669
+        },
+        "comet": {
+          "mean": 0.6576933667554961
+        },
+        "bertscore": {
+          "mean": 0.8532401919364929
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9850930489970458,
+          "p_value": 7.933298769774917e-70
+        },
+        "comet": {
+          "correlation": 0.9888835801879281,
+          "p_value": 1.837928396981973e-75
+        },
+        "bertscore": {
+          "correlation": 0.9686574295269947,
+          "p_value": 1.2826362983859354e-55
+        }
+      }
+    },
+    "crime and law": {
+      "original": {
+        "bleu": {
+          "mean": 0.04013263211092863
+        },
+        "comet": {
+          "mean": 0.6385664008557796
+        },
+        "bertscore": {
+          "mean": 0.8476929664611816
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.0397805108572426
+        },
+        "comet": {
+          "mean": 0.6390598248690367
+        },
+        "bertscore": {
+          "mean": 0.8469047546386719
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9758064516129032,
+          "p_value": 2.2981479070977103e-21
+        },
+        "comet": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "bertscore": {
+          "correlation": 0.9835043988269794,
+          "p_value": 7.736534386947265e-24
+        }
+      }
+    },
+    "science": {
+      "original": {
+        "bleu": {
+          "mean": 0.08420213514094119
+        },
+        "comet": {
+          "mean": 0.6242121621966362
+        },
+        "bertscore": {
+          "mean": 0.8549717664718628
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.07979160272052091
+        },
+        "comet": {
+          "mean": 0.6254029765725135
+        },
+        "bertscore": {
+          "mean": 0.8549247980117798
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 0.9864661654135337,
+          "p_value": 1.3775681209191945e-15
+        },
+        "comet": {
+          "correlation": 0.9909774436090225,
+          "p_value": 3.6423222015869136e-17
+        },
+        "bertscore": {
+          "correlation": 0.9984962406015038,
+          "p_value": 3.713627835952669e-24
+        }
+      }
+    },
+    "travel, tourism": {
+      "original": {
+        "bleu": {
+          "mean": 0.0808346586321595
+        },
+        "comet": {
+          "mean": 0.6713436316041386
+        },
+        "bertscore": {
+          "mean": 0.8634301424026489
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.08014885244499326
+        },
+        "comet": {
+          "mean": 0.6721468848340652
+        },
+        "bertscore": {
+          "mean": 0.863683819770813
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "comet": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "bertscore": {
+          "correlation": 0.9926470588235295,
+          "p_value": 3.578273822703326e-15
+        }
+      }
+    },
+    "travel, history": {
+      "original": {
+        "bleu": {
+          "mean": 0.045775036310877135
+        },
+        "comet": {
+          "mean": 0.678067970275879
+        },
+        "bertscore": {
+          "mean": 0.8506746292114258
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.045775036310877135
+        },
+        "comet": {
+          "mean": 0.6786650270223618
+        },
+        "bertscore": {
+          "mean": 0.8505548238754272
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "comet": {
+          "correlation": 0.9984962406015038,
+          "p_value": 3.713627835952669e-24
+        },
+        "bertscore": {
+          "correlation": 0.9984962406015038,
+          "p_value": 3.713627835952669e-24
+        }
+      }
+    },
+    "travel, safety": {
+      "original": {
+        "bleu": {
+          "mean": 0.07200796659861806
+        },
+        "comet": {
+          "mean": 0.7183906197547912
+        },
+        "bertscore": {
+          "mean": 0.8652098178863525
+        }
+      },
+      "corrected": {
+        "bleu": {
+          "mean": 0.07200796659861806
+        },
+        "comet": {
+          "mean": 0.7183906197547912
+        },
+        "bertscore": {
+          "mean": 0.8652098178863525
+        }
+      },
+      "correlations": {
+        "bleu": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "comet": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        },
+        "bertscore": {
+          "correlation": 1.0,
+          "p_value": 0.0
+        }
+      }
+    }
+  }
+}

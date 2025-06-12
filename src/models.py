@@ -1,88 +1,150 @@
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from abc import ABC, abstractmethod
+from typing import List, Dict
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, AutoModelForCausalLM
 import torch
-from tqdm import tqdm
 
-class TranslationModel:
-    def __init__(self, model_name: str):
-        """Initialize translation model"""
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        
-        # Enable GPU acceleration if available
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = self.model.to(self.device)
-        self.model.eval()
+OPUS_MT_LANG_MAP = {
+    'hau': 'ha',
+    'nso': 'nso',
+    'tso': 'ts',
+    'zul': 'zu',
+    'en': 'en'
+}
+
+MADLAD_LANG_MAP = {
+    'hau': 'ha',
+    'nso': 'nso',
+    'zul': 'zu',
+    'en': 'en',
+    'tso': 'ts'
+}
+
+class TranslationModel(ABC):
+    """Base class for translation models"""
+    
+    @abstractmethod
+    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+        """Translate a list of texts from source language to target language"""
+        pass
+    
+    @abstractmethod
+    def get_model_name(self) -> str:
+        """Get the name of the model"""
+        pass
+
+class NLLBModel(TranslationModel):
+    """NLLB model wrapper"""
+    
+    def __init__(self, model_name: str = "facebook/nllb-200-distilled-600M"):
         self.model_name = model_name
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
         
-        # Set padding token if not exists
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+        src_lang_code = f"{source_lang}_Latn"
+        tgt_lang_code = f"{target_lang}_Latn"
+        
+        inputs = self.tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        
+        translated_tokens = self.model.generate(
+            **inputs,
+            forced_bos_token_id=self.tokenizer.convert_tokens_to_ids(tgt_lang_code),
+            max_length=512
+        )
+        
+        translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
+        return translations
+    
+    def get_model_name(self) -> str:
+        return "NLLB"
 
-    def translate_batch(self, texts: list, target_lang: str, batch_size: int = 32) -> list:
-        """Translate a batch of texts to target language with optimized performance"""
-        all_translations = []
-        
-        # Process in batches
-        for i in tqdm(range(0, len(texts), batch_size), desc=f"Translating to {target_lang}", unit="batch"):
-            batch_texts = texts[i:i + batch_size]
-            
-            # Handle different model types
-            if "nllb" in self.model_name:
-                # NLLB uses specific language codes
-                lang_map = {
-                    "hau": "hau_Latn",
-                    "nso": "nso_Latn",
-                    "tso": "tso_Latn",
-                    "zul": "zul_Latn"
+class OPUSMTModel(TranslationModel):
+    """OPUS-MT model wrapper"""
+    
+    def __init__(self):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.models = {}  # Cache for loaded models
+    
+    def _get_model_name(self, source_lang: str, target_lang: str) -> str:
+        """Get the appropriate OPUS-MT model name for the language pair"""
+        src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
+        tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
+        if (tgt_code == "zu"):
+            return f"Helsinki-NLP/opus-mt-{src_code}-mul"
+        return f"Helsinki-NLP/opus-mt-{src_code}-{tgt_code}"
+    
+    def _load_model(self, source_lang: str, target_lang: str):
+        """Load the appropriate model for the language pair"""
+        src_code = OPUS_MT_LANG_MAP.get(source_lang, source_lang)
+        tgt_code = OPUS_MT_LANG_MAP.get(target_lang, target_lang)
+
+        model_name = self._get_model_name(src_code, tgt_code)
+        if model_name not in self.models:
+            try:
+                self.models[model_name] = {
+                    'tokenizer': AutoTokenizer.from_pretrained(model_name),
+                    'model': AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
                 }
-                lang_code = target_lang.split('_')[0]
-                nllb_lang = lang_map.get(lang_code, target_lang)
-                # Set source and target languages for NLLB
-                self.tokenizer.src_lang = "eng_Latn"
-                self.tokenizer.tgt_lang = nllb_lang
-            elif "m2m100" in self.model_name:
-                self.tokenizer.src_lang = "en"
-                self.tokenizer.tgt_lang = target_lang
-            
-            # Tokenize batch
-            inputs = self.tokenizer(
-                batch_texts, 
-                return_tensors="pt", 
-                padding=True, 
-                truncation=True,
-                max_length=512
-            ).to(self.device)
-            
-            # Generate translations with optimized parameters
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    **inputs,
-                    max_length=512,
-                    num_beams=2,
-                    early_stopping=True,
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
-                )
-            
-            # Decode batch translations
-            batch_translations = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-            all_translations.extend(batch_translations)
+            except Exception as e:
+                raise ValueError(f"Could not load OPUS-MT model for {source_lang}-{target_lang}: {str(e)}")
+        return self.models[model_name]
+    
+    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+        model_data = self._load_model(source_lang, target_lang)
+        tokenizer = model_data['tokenizer']
+        model = model_data['model']
         
-        return all_translations
+        if target_lang == 'zul':
+            tagged_texts = [f">>zul<< {text}" for text in texts]
+            inputs = tokenizer(tagged_texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        else:
+            inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+        
+        translated_tokens = model.generate(
+            **inputs,
+            early_stopping=True
+        )
+        
+        # Decode translations
+        translations = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
+        return translations
+    
+    def get_model_name(self) -> str:
+        return "OPUS-MT"
 
-    def translate(self, texts: list, target_lang: str) -> list:
-        """Translate a list of texts to target language (legacy method - uses batch processing internally)"""
-        return self.translate_batch(texts, target_lang, batch_size=8)
+class MADLADModel(TranslationModel):
+    """MADLAD-400 model wrapper for multilingual translation"""
 
-class ModelFactory:
-    @staticmethod
-    def get_model(model_type: str) -> TranslationModel:
-        """Get translation model by type"""
-        model_map = {
-            "nllb": "facebook/nllb-200-distilled-600M",
-            "opus-mt": "Helsinki-NLP/opus-mt-en-af",
-            "m2m100": "facebook/m2m100_418M"
-        }
-        if model_type not in model_map:
-            raise ValueError(f"Unknown model type: {model_type}")
-        return TranslationModel(model_map[model_type])
+    def __init__(self, model_name: str = "google/madlad400-3b-mt"):
+        self.model_name = model_name
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(self.device)
+
+    def translate(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
+        src_code = MADLAD_LANG_MAP.get(source_lang, source_lang)
+        tgt_code = MADLAD_LANG_MAP.get(target_lang, target_lang)
+
+        prompts = [f"<2{tgt_code}> {text}" for text in texts]
+
+        inputs = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True).to(self.device)
+
+        translated_tokens = self.model.generate(
+            **inputs
+        )
+
+        translations = self.tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)
+        return translations
+
+    def get_model_name(self) -> str:
+        return "MADLAD-400"
+
+
+def initialize_models() -> Dict[str, TranslationModel]:
+    """Initialize all translation models"""
+    return {
+        "nllb": NLLBModel(),
+        "opus-mt": OPUSMTModel(),
+        "madlad": MADLADModel()
+    } 
