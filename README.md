@@ -6,6 +6,49 @@ This project investigates how reference corrections in the FLORES evaluation dat
 
 We examine the impact of manually corrected references (from Abdulmumin et al., 2024) on MT model evaluation. Our analysis focuses on changes in model rankings, score sensitivity across metrics (BLEU, COMET, BERTScore), and variation across text domains.
 
+## Project Structure
+
+### Root Files
+- `README.md` - This documentation file
+- `requirements.txt` - Python dependencies for the project including ML libraries, evaluation metrics, and visualization tools
+- `.gitignore` - Git ignore patterns for Python projects
+- `NLP GROUP 7.docx` - Project documentation and report
+- `Project-Proposal.pdf` - Original project proposal document
+
+### Source Code (`src/`)
+- `main.py` - Main entry point for running the evaluation pipeline
+- `data_loader.py` - Utilities for loading and preprocessing FLORES dataset
+- `evaluation.py` - Core evaluation logic for computing MT metrics (BLEU, COMET, BERTScore)
+- `models.py` - Model wrapper classes for NLLB, OPUS-MT, and MADLAD-400
+- `translation.py` - Translation pipeline and model inference logic
+- `visualization.py` - Comprehensive visualization generation for results analysis
+- `metrics/` - Additional metric implementations and utilities (contains Python cache files)
+- `models/` - Model-specific implementations and configurations (contains Python cache files)
+
+### Data (`data/`)
+- `metadataDevTest.json` - Metadata for the FLORES devtest sets including domain information
+- `original/` - Original FLORES evaluation datasets
+  - `devtest/` - Original devtest split data files
+  - `dev/` - Original dev split data files
+- `corrected/` - Manually corrected FLORES evaluation datasets
+  - `devtest/` - Corrected devtest split with improved reference translations
+  - `dev/` - Corrected dev split with improved reference translations
+
+### Results (`results/`)
+- `translations/` - Generated translation outputs from each model (JSON format)
+  - Translation files for each model-language pair (e.g., `nllb_en_hau.json`)
+- `evaluations/` - Computed evaluation scores and metrics
+  - `nllb/`, `opus-mt/`, `madlad/` - Model-specific evaluation results by language
+- `visualizations/` - Generated analysis plots and figures
+  - Individual model-language analysis plots (e.g., `nllb_hau_combined_analysis.png`)
+  - Cross-model comparison visualizations (e.g., `all_models_combined_analysis.png`)
+  - Correlation and metric comparison plots
+
+### Other Directories
+- `.git/` - Git version control metadata
+- `.idea/` - IDE configuration files (IntelliJ/PyCharm)
+- `venev/` - Python virtual environment (likely a typo for "venv")
+
 ## What We Did
 
 - **Model Output Evaluation**: We evaluated outputs from several MT models (NLLB, OPUS-MT, MADLAD-400) using both original and corrected references.
